@@ -61,6 +61,14 @@ fun Fragment.navigateToPublicService(service: PublicService, arg: String? = null
             )
         )
 
+        PublicServicesHomeConst.PS_LEGAL_LEASE_CONTRACT -> navigate(
+            NavMainDirections.actionHomeFToLeaseContract()
+        )
+
+        PublicServicesHomeConst.PS_LEGAL_EMPLOYMENT_CONTRACT -> {
+            // TODO: Implement employment contract flow
+        }
+
         PublicServicesHomeConst.PS_LIFECELL_MNP -> {
             // TODO: Navigate to lifecell feature
         }

@@ -49,10 +49,10 @@ fun BtnPlainAtm(
     ConstraintLayout(
         modifier = modifier
             .padding(
-                top = 24.dp,
-                bottom = 16.dp,
-                start = 40.dp,
-                end = 40.dp
+                top = 16.dp,
+                bottom = 8.dp,
+                start = 32.dp,
+                end = 32.dp
             )
             .noRippleClickable(debounce = true) {
                 if (data.interactionState == UIState.Interaction.Enabled && !(data.id == progressIndicator.first && progressIndicator.second)) {

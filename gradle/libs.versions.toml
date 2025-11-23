@@ -12,7 +12,6 @@ androidxBrowser = "1.8.0"
 androidxCardview = "1.0.0"
 androidxComposeBom = "2025.04.01"
 androidxComposeRuntimeTracing = "1.5.15"
-androidxComposeCompiler = "1.5.15"
 androidxComposeLivedata = "1.7.0-rc01"
 androidxCore = "1.13.1"
 androidxCoreTesting = "2.1.0"
@@ -196,7 +195,6 @@ androidx-compose-material3-adaptive-navigation = { group = "androidx.compose.mat
 androidx-compose-material3-windowSizeClass = { group = "androidx.compose.material3", name = "material3-window-size-class" }
 androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime" }
 androidx-compose-runtime-tracing = { group = "androidx.compose.runtime", name = "runtime-tracing", version.ref = "androidxComposeRuntimeTracing" }
-androidx-compose-compiler = { group = "androidx.compose.compiler", name = "compiler", version.ref = "androidxComposeCompiler" }
 androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
 androidx-compose-ui-test = { group = "androidx.compose.ui", name = "ui-test-junit4" }

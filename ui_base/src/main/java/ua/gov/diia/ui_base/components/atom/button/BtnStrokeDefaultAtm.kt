@@ -48,9 +48,10 @@ fun BtnStrokeDefaultAtm(
         isLoading.value = data.id == progressIndicator.first && progressIndicator.second
     }
 
-    Button(modifier = modifier
-        .padding(top = 16.dp)
-        .padding(horizontal = 40.dp, vertical = 16.dp)
+    Button(
+        modifier = modifier
+        .padding(top = 8.dp)
+        .padding(horizontal = 32.dp, vertical = 10.dp)
         .defaultMinSize(minWidth = 160.dp)
         .testTag(data.componentId?.asString() ?: ""),
         colors = ButtonDefaults.buttonColors(
@@ -81,7 +82,7 @@ fun BtnStrokeDefaultAtm(
         }
         if(!isLoading.value){
             Text(
-                modifier = Modifier.padding(vertical = 8.dp),
+                modifier = Modifier.padding(vertical = 6.dp),
                 text = data.title.asString(),
                 color = if (data.interactionState == UIState.Interaction.Disabled) {
                     BlackAlpha10

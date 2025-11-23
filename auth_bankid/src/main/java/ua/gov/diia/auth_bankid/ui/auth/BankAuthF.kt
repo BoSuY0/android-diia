@@ -44,6 +44,17 @@ internal class BankAuthF : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        // In mock debug build we skip real BankID web flow
+        // and immediately complete verification with mock data.
+        if (isMockMode()) {
+            val result = VerificationFlowResult.CompleteVerificationStep(
+                requestId = "mock-request-id",
+                bankCode = args.requestData.bankCode
+            )
+            completeAuth(result)
+            return null
+        }
+
         composeView = ComposeView(requireContext())
         return composeView
     }
@@ -196,6 +207,16 @@ internal class BankAuthF : Fragment() {
             data = ConsumableItem(result)
         )
         findNavController().popBackStack(args.resultDestination, false)
+    }
+
+    private fun isMockMode(): Boolean {
+        val buildType = withBuildConfig.getBuildType()
+        val versionName = withBuildConfig.getVersionName()
+        return buildType.contains("mock", ignoreCase = true) ||
+            buildType.contains("hackathon", ignoreCase = true) ||
+            buildType.contains("debug", ignoreCase = true) ||
+            versionName.contains("mock", ignoreCase = true) ||
+            versionName.contains("hackathon", ignoreCase = true)
     }
 
     private companion object {

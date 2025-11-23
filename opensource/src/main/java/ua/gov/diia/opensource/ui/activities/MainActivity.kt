@@ -10,6 +10,8 @@ import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavController
 import androidx.navigation.findNavController
 import androidx.work.WorkManager
+import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import ua.gov.diia.core.di.actions.GlobalActionLogout
@@ -56,6 +58,9 @@ abstract class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setTheme(R.style.Theme_Diia_NoActionBar)
         setUpEdgeToEdge()
+        window.statusBarColor = ContextCompat.getColor(this, android.R.color.black)
+        window.navigationBarColor = ContextCompat.getColor(this, android.R.color.black)
+        WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
         adjustFontScale(resources.configuration)
 
         setUpAnalytics()

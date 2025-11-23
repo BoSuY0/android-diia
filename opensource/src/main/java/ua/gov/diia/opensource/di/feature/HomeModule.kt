@@ -21,6 +21,7 @@ import ua.gov.diia.notifications.store.datasource.notifications.NotificationData
 import ua.gov.diia.notifications.util.notification.manager.DiiaNotificationManager
 import ua.gov.diia.notifications.util.notification.push.PushTokenProvider
 import ua.gov.diia.opensource.deeplinkprocessor.DeepLinkActionStartFlowProcessor
+import ua.gov.diia.opensource.deeplinkprocessor.DeepLinkActionJoinContractProcessor
 import ua.gov.diia.opensource.deeplinkprocessor.DeepLinkActionViewDocumentProcessor
 import ua.gov.diia.opensource.deeplinkprocessor.DeeplinkProcessorImpl
 import ua.gov.diia.opensource.helper.HomeHelperImpl
@@ -46,7 +47,8 @@ class HomeModule {
             ),
             DeepLinkActionStartFlowProcessor(
                 notificationController
-            )
+            ),
+            DeepLinkActionJoinContractProcessor()
         )
 
         return DeeplinkProcessorImpl(linkActionProcessors)

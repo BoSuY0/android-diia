@@ -7,6 +7,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import ua.gov.diia.analytics.DiiaAnalytics
+import ua.gov.diia.opensource.BuildConfig
 import ua.gov.diia.opensource.ui.activities.MainActivity
 import javax.inject.Inject
 
@@ -18,6 +19,7 @@ class VendorActivity: MainActivity() {
 
 
     override fun setUpAnalytics() {
+        if (!BuildConfig.FIREBASE_ENABLED) return
         lifecycleScope.launch(Dispatchers.IO) {
             diiaStorage.getMobileUuid().let {
                 analytics.setUserId(it)

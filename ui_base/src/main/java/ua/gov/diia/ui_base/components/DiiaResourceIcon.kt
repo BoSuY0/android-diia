@@ -97,6 +97,7 @@ enum class DiiaResourceIcon(
     EDUCATION("education", R.drawable.ic_education, R.string.not_handled_icon),
     DRAG("drag", R.drawable.drag, R.string.not_handled_icon),
     MESSAGE("message", R.drawable.ic_message, R.string.not_handled_icon),
+    MESSAGE_CIRCLE("messageCircle", R.drawable.diia_ic_message_circle, R.string.not_handled_icon),
     NEW_MESSAGE("newMessage", R.drawable.new_message, R.string.not_handled_icon),
     GALLERY("gallery", R.drawable.diia_icon_gallery, R.string.not_handled_icon),
     CAMERA("camera", R.drawable.diia_icon_camera, R.string.not_handled_icon),

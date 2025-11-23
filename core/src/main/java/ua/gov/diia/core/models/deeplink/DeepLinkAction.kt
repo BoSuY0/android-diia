@@ -54,3 +54,7 @@ class DeepLinkActionViewDocumentWithRating(
     val documentType: String
 ) : DeepLinkAction()
 
+class DeepLinkActionJoinContract(
+    val sessionId: String
+) : DeepLinkAction()
+

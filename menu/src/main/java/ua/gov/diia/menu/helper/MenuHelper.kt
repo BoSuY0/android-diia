@@ -45,6 +45,16 @@ interface MenuHelper {
     fun navigateToSignHistory(fragment: Fragment)
 
     /**
+     * Navigate to legal contracts/services
+     */
+    fun navigateToContracts(fragment: Fragment)
+
+    /**
+     * Navigate to create new contract flow
+     */
+    fun navigateToCreateContract(fragment: Fragment)
+
+    /**
      * Navigate to AppSessions flow
      */
     fun navigateToAppSessions(fragment: Fragment)

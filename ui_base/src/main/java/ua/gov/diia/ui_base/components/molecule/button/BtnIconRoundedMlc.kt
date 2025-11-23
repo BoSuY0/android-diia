@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -56,11 +56,11 @@ fun BtnIconRoundedMlc(
     ) {
         Box(
             modifier = Modifier
+                .size(56.dp)
                 .background(
                     color = Black,
-                    shape = RoundedCornerShape(16.dp)
+                    shape = CircleShape
                 )
-                .padding(14.dp)
                 .noRippleClickable {
                     onUIAction(
                         UIAction(
@@ -70,9 +70,11 @@ fun BtnIconRoundedMlc(
                         )
                     )
                 }
+            ,
+            contentAlignment = Alignment.Center
         ) {
             UiIconWrapperSubatomic(
-                modifier = Modifier.size(24.dp),
+                modifier = Modifier.size(28.dp),
                 icon = data.icon,
                 contentDescription = null
             )

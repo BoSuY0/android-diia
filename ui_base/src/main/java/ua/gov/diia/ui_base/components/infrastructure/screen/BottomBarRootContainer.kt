@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.snapshots.SnapshotStateList
@@ -32,6 +33,8 @@ import ua.gov.diia.ui_base.components.molecule.checkbox.CheckboxBtnWhiteOrg
 import ua.gov.diia.ui_base.components.molecule.checkbox.CheckboxBtnWhiteOrgData
 import ua.gov.diia.ui_base.components.organism.bottom.BottomGroupOrg
 import ua.gov.diia.ui_base.components.organism.bottom.BottomGroupOrgData
+import ua.gov.diia.ui_base.components.organism.bottom.BtnIconRoundedGroupOrg
+import ua.gov.diia.ui_base.components.organism.bottom.BtnIconRoundedGroupOrgData
 import ua.gov.diia.ui_base.components.organism.list.ListItemGroupOrg
 import ua.gov.diia.ui_base.components.organism.list.ListItemGroupOrgData
 import ua.gov.diia.ui_base.mappers.loader.mapToLoader
@@ -118,6 +121,15 @@ fun BottomBarRootContainer(
                         BtnSlideMlc(
                             data = element,
                             onUIAction = onUIAction,
+                        )
+                    }
+
+                    is BtnIconRoundedGroupOrgData -> {
+                        isContainBottomGroupOrg = true
+                        BtnIconRoundedGroupOrg(
+                            modifier = Modifier.fillMaxWidth(),
+                            data = element,
+                            onUIAction = onUIAction
                         )
                     }
                 }

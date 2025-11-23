@@ -38,4 +38,7 @@ sealed class PublicServiceHomeNavigation : HomeNavigation {
         override var isConsumed: Boolean = false
     ) : PublicServiceHomeNavigation()
 
+    data class NavigateToContracts(
+        override var isConsumed: Boolean = false
+    ) : PublicServiceHomeNavigation()
 }

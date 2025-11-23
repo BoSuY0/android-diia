@@ -32,6 +32,7 @@ import ua.gov.diia.publicservice.models.PublicServiceCategory
 import ua.gov.diia.publicservice.models.PublicServiceTab
 import ua.gov.diia.publicservice.models.PublicServicesCategories
 import ua.gov.diia.publicservice.network.ApiPublicServices
+import ua.gov.diia.ui_base.components.infrastructure.DataActionWrapper
 import ua.gov.diia.ui_base.components.infrastructure.UIElementData
 import ua.gov.diia.ui_base.components.infrastructure.addAllIfNotNull
 import ua.gov.diia.ui_base.components.infrastructure.addIfNotNull
@@ -40,7 +41,9 @@ import ua.gov.diia.ui_base.components.infrastructure.event.UIActionKeysCompose
 import ua.gov.diia.ui_base.components.infrastructure.navigation.NavigationPath
 import ua.gov.diia.ui_base.components.infrastructure.utils.resource.UiText
 import ua.gov.diia.ui_base.components.molecule.header.TitleGroupMlcData
+import ua.gov.diia.ui_base.components.molecule.list.ListItemMlcData
 import ua.gov.diia.ui_base.components.organism.header.TopGroupOrgData
+import ua.gov.diia.ui_base.components.organism.list.ListItemGroupOrgData
 import ua.gov.diia.ui_base.navigation.BaseNavigation
 import javax.inject.Inject
 
@@ -67,6 +70,7 @@ class PublicServicesCategoriesComposeVM @Inject constructor(
     val bodyData: SnapshotStateList<UIElementData> = _bodyData
 
     private var categoryToOpen: String? = null
+    private var expandedCategoryCode: String? = null
 
     private var selectedTab: String? = null
     private var categoriesData = PublicServicesCategories(
@@ -258,6 +262,29 @@ class PublicServicesCategoriesComposeVM @Inject constructor(
                 selectedTab = selectedTab
             )
         )
+
+        expandedCategoryCode?.let { code ->
+            val category = filteredCategories.find { it.code == code }
+            if (category != null && category.publicServices.isNotEmpty()) {
+                _bodyData.addIfNotNull(
+                    ListItemGroupOrgData(
+                        itemsList = SnapshotStateList<ListItemMlcData>().apply {
+                            addAll(category.publicServices.map { service ->
+                                ListItemMlcData(
+                                    label = UiText.DynamicString(service.name),
+                                    id = service.code,
+                                    iconRight = ua.gov.diia.ui_base.components.infrastructure.utils.resource.UiIcon.DrawableResource(ua.gov.diia.ui_base.components.DiiaResourceIcon.ELLIPSE_ARROW_RIGHT.code),
+                                    action = DataActionWrapper(
+                                        type = service.code
+                                    )
+                                )
+                            })
+                        },
+                        componentId = UiText.DynamicString("expanded_category_${category.code}")
+                    )
+                )
+            }
+        }
     }
 
     private fun navigateCategoriesServicesSearch() {
@@ -272,6 +299,10 @@ class PublicServicesCategoriesComposeVM @Inject constructor(
         when (category.code) {
             PublicServiceConst.PS_ENEMY -> {
                 openEnemyShareLink()
+                return
+            }
+            "ic_document" -> {
+                _navigation.tryEmit(PublicServicesCategoriesNavigation.NavigateToContracts)
                 return
             }
         }
@@ -355,4 +386,5 @@ sealed interface PublicServicesCategoriesNavigation : NavigationPath {
         val deeplink: DeepLinkActionStartFlow
     ) : PublicServicesCategoriesNavigation
 
+    object NavigateToContracts : PublicServicesCategoriesNavigation
 }

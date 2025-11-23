@@ -111,6 +111,71 @@
         app:popEnterAnim="@anim/slide_in_left"
         app:popExitAnim="@anim/slide_out_right" />
 
+    <action
+        android:id="@+id/action_homeF_to_diiaId"
+        app:destination="@id/nav_diia_id"
+        app:enterAnim="@anim/slide_in_right"
+        app:exitAnim="@anim/slide_out_left"
+        app:popEnterAnim="@anim/slide_in_left"
+        app:popExitAnim="@anim/slide_out_right">
+
+        <argument
+            android:name="enableResultMode"
+            android:defaultValue="false"
+            app:argType="boolean" />
+
+        <argument
+            android:name="resultDestination"
+            android:defaultValue="-1"
+            app:argType="integer" />
+
+        <argument
+            android:name="resultKey"
+            android:defaultValue="unknownKey"
+            app:argType="string" />
+
+        <argument
+            android:name="forceDeleteMode"
+            android:defaultValue="false"
+            app:argType="boolean" />
+
+    </action>
+
+    <action
+        android:id="@+id/action_homeF_to_sign_history"
+        app:destination="@id/nav_sign_history"
+        app:enterAnim="@anim/slide_in_right"
+        app:exitAnim="@anim/slide_out_left"
+        app:popEnterAnim="@anim/slide_in_left"
+        app:popExitAnim="@anim/slide_out_right" />
+
+    <action
+        android:id="@+id/action_homeF_to_contracts"
+        app:destination="@id/nav_contracts"
+        app:enterAnim="@anim/slide_in_right"
+        app:exitAnim="@anim/slide_out_left"
+        app:popEnterAnim="@anim/slide_in_left"
+        app:popExitAnim="@anim/slide_out_right">
+        <argument
+            android:name="sessionId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
+    </action>
+
+    <action
+        android:id="@+id/action_homeF_to_create_contract"
+        app:destination="@id/createContractFCompose"
+        app:enterAnim="@anim/slide_in_right"
+        app:exitAnim="@anim/slide_out_left"
+        app:popEnterAnim="@anim/slide_in_left"
+        app:popExitAnim="@anim/slide_out_right" />
+    
+    <fragment
+        android:id="@+id/createContractFCompose"
+        android:name="ua.gov.diia.opensource.ui.compose.CreateContractFCompose"
+        android:label="CreateContractFCompose" />
+
     <fragment
         android:id="@+id/settingsF"
         android:name="ua.gov.diia.opensource.ui.fragments.settings.SettingsF"
@@ -161,6 +226,14 @@
             app:argType="string"
             app:nullable="true" />
     </action>
+
+    <action
+        android:id="@+id/action_homeF_to_lease_contract"
+        app:destination="@id/nav_lease_contract"
+        app:enterAnim="@anim/slide_in_right"
+        app:exitAnim="@anim/slide_out_left"
+        app:popEnterAnim="@anim/slide_in_left"
+        app:popExitAnim="@anim/slide_out_right" />
 
     <action
         android:id="@+id/action_global_to_stack_order"
@@ -293,7 +366,10 @@
     <include app:graph="@navigation/nav_web" />
     <include app:graph="@navigation/nav_template_dialog" />
     <include app:graph="@navigation/nav_splash" />
+    <include app:graph="@navigation/nav_diia_id" />
+    <include app:graph="@navigation/nav_sign_history" />
     <include app:graph="@navigation/nav_menu_actions" />
+    <include app:graph="@navigation/nav_contracts" />
     <include app:graph="@navigation/nav_public_service_category_details" />
     <include app:graph="@navigation/nav_public_service_search" />
     <include app:graph="@navigation/nav_system_dialog" />
@@ -308,5 +384,6 @@
     <include app:graph="@navigation/nav_notification_settings" />
     <include app:graph="@navigation/nav_context_menu" />
     <include app:graph="@navigation/nav_faq" />
+    <include app:graph="@navigation/nav_lease_contract" />
 
 </navigation>

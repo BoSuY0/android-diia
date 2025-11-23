@@ -13,6 +13,7 @@ import ua.gov.diia.opensource.data.data_source.network.interceptors.HttpAuthoriz
 import ua.gov.diia.opensource.data.data_source.network.interceptors.HttpLoggingInterceptor
 import ua.gov.diia.opensource.data.data_source.network.interceptors.HttpMobileUuidInterceptor
 import ua.gov.diia.opensource.data.data_source.network.interceptors.HttpProlongAuthorizationInterceptor
+import ua.gov.diia.opensource.data.data_source.network.interceptors.MockApiInterceptor
 import ua.gov.diia.opensource.data.data_source.network.setTimeout
 import javax.inject.Singleton
 
@@ -26,12 +27,14 @@ object OkHttpClientModule {
     fun provideUnauthorizedOkHttpClient(
         loggingInterceptor: HttpLoggingInterceptor,
         appInfoHeaderInterceptor: HttpAppInfoHeaderInterceptor,
-        uuidInterceptor: HttpMobileUuidInterceptor
+        uuidInterceptor: HttpMobileUuidInterceptor,
+        mockApiInterceptor: MockApiInterceptor
     ): OkHttpClient = OkHttpClient.Builder()
         .apply {
             addInterceptor(appInfoHeaderInterceptor)
             addInterceptor(uuidInterceptor)
             addInterceptor(loggingInterceptor)
+            addInterceptor(mockApiInterceptor)
             setTimeout()
         }.build()
 
@@ -42,13 +45,15 @@ object OkHttpClientModule {
         loggingInterceptor: HttpLoggingInterceptor,
         appInfoHeaderInterceptor: HttpAppInfoHeaderInterceptor,
         uuidInterceptor: HttpMobileUuidInterceptor,
-        authorizationInterceptor: HttpAuthorizationInterceptor
+        authorizationInterceptor: HttpAuthorizationInterceptor,
+        mockApiInterceptor: MockApiInterceptor
     ): OkHttpClient = OkHttpClient.Builder()
         .apply {
             addInterceptor(appInfoHeaderInterceptor)
             addInterceptor(uuidInterceptor)
             addInterceptor(authorizationInterceptor)
             addInterceptor(loggingInterceptor)
+            addInterceptor(mockApiInterceptor)
             setTimeout()
         }.build()
 
@@ -59,13 +64,15 @@ object OkHttpClientModule {
         loggingInterceptor: HttpLoggingInterceptor,
         appInfoHeaderInterceptor: HttpAppInfoHeaderInterceptor,
         uuidInterceptor: HttpMobileUuidInterceptor,
-        prolongAuthorizationInterceptor: HttpProlongAuthorizationInterceptor
+        prolongAuthorizationInterceptor: HttpProlongAuthorizationInterceptor,
+        mockApiInterceptor: MockApiInterceptor
     ): OkHttpClient = OkHttpClient.Builder()
         .apply {
             addInterceptor(appInfoHeaderInterceptor)
             addInterceptor(uuidInterceptor)
             addInterceptor(prolongAuthorizationInterceptor)
             addInterceptor(loggingInterceptor)
+            addInterceptor(mockApiInterceptor)
             setTimeout()
         }.build()
 }

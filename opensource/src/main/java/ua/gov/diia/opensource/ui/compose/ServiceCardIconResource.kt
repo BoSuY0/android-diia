@@ -25,13 +25,13 @@ enum class ServiceCardIconResource(
         fun getResourceId(code: String): Int {
             return entries
                 .firstOrNull { code == it.code }?.drawableResourceId
-                ?: DiiaResourceIcon.DEFAULT.drawableResourceId
+                ?: DiiaResourceIcon.getResourceId(code)
         }
 
         fun getContentDescription(code: String): Int {
             return entries
                 .firstOrNull { code == it.code }?.contentDescriptionResourceId
-                ?: DiiaResourceIcon.DEFAULT.contentDescriptionResourceId
+                ?: DiiaResourceIcon.getContentDescription(code)
         }
     }
 }

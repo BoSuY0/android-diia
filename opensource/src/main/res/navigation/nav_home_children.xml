@@ -24,9 +24,13 @@
         android:id="@+id/global_to_feedF"
         app:destination="@id/feedF" />
 
+    <fragment
+        android:id="@+id/contractsFCompose"
+        android:name="ua.gov.diia.opensource.ui.compose.ContractsFCompose" />
+
     <action
         android:id="@+id/global_to_publicServicesFCompose"
-        app:destination="@id/nav_public_service_categories" />
+        app:destination="@id/contractsFCompose" />
 
     <action
         android:id="@+id/global_to_docGalleryFCompose"

@@ -9,6 +9,7 @@ import ua.gov.diia.publicservice.models.PublicServicesCategories
 import ua.gov.diia.publicservice.ui.categories.compose.PublicServicesCategoriesTabMapper
 import ua.gov.diia.ui_base.components.atom.status.SquareChipStatusAtmData
 import ua.gov.diia.ui_base.components.atom.status.SquareChipType
+import ua.gov.diia.ui_base.components.infrastructure.DataActionWrapper
 import ua.gov.diia.ui_base.components.infrastructure.UIElementData
 import ua.gov.diia.ui_base.components.infrastructure.state.UIState
 import ua.gov.diia.ui_base.components.infrastructure.utils.SidePaddingMode
@@ -106,21 +107,23 @@ class PublicServicesCategoriesTabMapperImpl @Inject constructor() :
     }
 
     private fun PublicServiceCategory.toServiceCardMlcData(): ServiceCardMlcData {
+        val iconCode = if (this.icon.isNotEmpty()) this.icon else this.code
         return ServiceCardMlcData(
             label = this.name,
             id = this.code,
-            icon = UiIcon.DrawableResource(this.code)
+            icon = UiIcon.DrawableResource(iconCode)
         )
     }
 
     private fun PublicServiceCategory.toServiceChipCardMlcData(
         currentTabCode: String
     ): ServiceChipCardMlcData {
+        val iconCode = if (this.icon.isNotEmpty()) this.icon else this.code
         val publicServiceChip = this.chips?.firstOrNull { chip -> chip.tab == currentTabCode }
         return ServiceChipCardMlcData(
             label = this.name,
             id = this.code,
-            icon = UiIcon.DrawableResource(this.code),
+            icon = UiIcon.DrawableResource(iconCode),
             squareChipStatusAtmData = publicServiceChip?.let { chip ->
                 SquareChipStatusAtmData(
                     type = when (chip.type) {

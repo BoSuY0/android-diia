@@ -52,4 +52,56 @@
     <string name="settings_allow_notifications">Налаштувати сповіщення</string>
     <string name="settings_share_with_friends">Розповісти друзям</string>
     <string name="settings_dialog_title_support">Дія хоче відкрити «%s»</string>
+
+    <string name="diia_id_title">Дія.Підпис</string>
+    <string name="diia_id_subtitle">Підписуйте документи онлайн у кілька кроків</string>
+    <string name="diia_id_description">Електронний підпис для договорів та заяв онлайн</string>
+    <string name="diia_id_hint">Підтвердіть особу та підписуйте документи прямо у застосунку.</string>
+    <string name="diia_id_security_title">Безпека підпису</string>
+    <string name="diia_id_security_desc">Доступ захищено біометрією та вашим кодом для підпису.</string>
+    <string name="diia_id_step_verify_title">Підтвердіть особу</string>
+    <string name="diia_id_step_verify_desc">Пройдіть верифікацію, щоб активувати Дія.Підпис.</string>
+    <string name="diia_id_step_sign_title">Підписуйте документи</string>
+    <string name="diia_id_step_sign_desc">Використовуйте підпис для договорів, заяв та послуг.</string>
+    <string name="diia_id_start">Налаштувати Дія.Підпис</string>
+    <string name="diia_id_swipe_title">Підписати документ</string>
+    <string name="diia_id_swipe_to_sign">Проведіть, щоб підписати</string>
+    <string name="diia_id_swipe_hint">Зсув вправо підтверджує дію</string>
+
+    <string name="sign_history_title">Історія підписань</string>
+    <string name="sign_history_subtitle">Останні дії з підписом</string>
+    <string name="sign_history_hint">Тут з’являються усі документи, які ви підписали в Дії.</string>
+    <string name="sign_history_description">Статуси підписань зберігаються навіть офлайн.</string>
+    <string name="sign_history_item_contract_label">Договір оренди</string>
+    <string name="sign_history_item_employment_label">Трудовий договір</string>
+    <string name="sign_history_item_statement_label">Заява на послугу</string>
+    <string name="sign_history_signed_at">Підписано %1$s</string>
+
+    <string name="contracts_title">Договори</string>
+    <string name="contracts_subtitle">Ваші активні та минулі договори</string>
+    <string name="contracts_item_status_line">Статус: %1$s • Оновлено %2$s</string>
+    <string name="contracts_item_rental_title">Договір оренди</string>
+    <string name="contracts_item_employment_title">Трудовий договір</string>
+    <string name="contracts_item_service_title">Договір на послуги</string>
+    <string name="contract_status_active">Активний</string>
+    <string name="contract_status_pending">Очікує підписання</string>
+    <string name="contract_status_draft">Чернетка</string>
+    <string name="contracts_action_create">Створити договір</string>
+    <string name="contracts_filter_all">Усі</string>
+    <string name="contracts_filter_active">Активні</string>
+    <string name="contracts_filter_pending">Очікують підпису</string>
+    <string name="contracts_filter_draft">Чернетки</string>
+    <string name="contracts_updated_at">Оновлено %1$s</string>
+    <string name="contracts_meta_signed">Підписано</string>
+    <string name="contracts_meta_draft">Чернетка</string>
+    <string name="contracts_details_history_title">Історія змін</string>
+    <string name="contracts_details_primary_action">Переглянути договір</string>
+    <string name="contracts_details_download">Завантажити договір</string>
+    <string name="contracts_details_sign">Підписати договір</string>
+    <string name="contracts_details_edit">Редагувати дані</string>
+    <string name="contracts_details_share">Поширити</string>
+    <string name="contracts_preview_error">Не вдалося завантажити попередній перегляд</string>
+    <string name="contracts_preview_retry">Спробувати ще раз</string>
+    <string name="contracts_share_message">Приєднуйся до договору в Дії: %1$s</string>
+    <string name="contracts_share_error">Посилання на договір недоступне</string>
 </resources>

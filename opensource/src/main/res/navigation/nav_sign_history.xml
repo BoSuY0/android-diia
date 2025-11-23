@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_sign_history"
+    app:startDestination="@id/signHistoryFCompose">
+
+    <fragment
+        android:id="@+id/signHistoryFCompose"
+        android:name="ua.gov.diia.opensource.ui.compose.SignHistoryFCompose"
+        android:label="SignHistoryFCompose" />
+</navigation>

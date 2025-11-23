@@ -1,5 +1,9 @@
 package ua.gov.diia.ui_base.components.molecule.message
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,10 +17,12 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -50,6 +56,8 @@ import ua.gov.diia.ui_base.components.theme.AzureRadiance16
 import ua.gov.diia.ui_base.components.theme.Black
 import ua.gov.diia.ui_base.components.theme.DiiaTextStyle
 import ua.gov.diia.ui_base.components.theme.InfoYellow
+import ua.gov.diia.ui_base.components.theme.gradientBluePosition01
+import ua.gov.diia.ui_base.components.theme.gradientBluePosition02
 
 @Composable
 fun AttentionIconMessageMlc(
@@ -58,87 +66,117 @@ fun AttentionIconMessageMlc(
     onUIAction: (UIAction) -> Unit
 ) {
     val isExpanded = remember { mutableStateOf(data.isExpanded) }
-    Box(
-        modifier = modifier
-            .padding(
-                start = data.paddingHorizontal.toDp(defaultPadding = 24.dp),
-                top = data.paddingTop.toDp(defaultPadding = 16.dp),
-                end = data.paddingHorizontal.toDp(defaultPadding = 24.dp)
+    val isVisible = remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        isVisible.value = true
+    }
+
+    val shape = RoundedCornerShape(16.dp)
+    val baseModifier = modifier
+        .padding(
+            start = data.paddingHorizontal.toDp(defaultPadding = 24.dp),
+            top = data.paddingTop.toDp(defaultPadding = 16.dp),
+            end = data.paddingHorizontal.toDp(defaultPadding = 24.dp)
+        )
+        .fillMaxWidth()
+
+    val boxModifier = when (data.backgroundMode) {
+        BackgroundMode.INFO -> {
+            baseModifier.background(
+                color = InfoYellow,
+                shape = shape
             )
-            .fillMaxWidth()
-            .background(
-                color = when (data.backgroundMode) {
-                    BackgroundMode.INFO -> InfoYellow
-                    BackgroundMode.NOTE -> AzureRadiance16
-                }, shape = RoundedCornerShape(16.dp)
+        }
+
+        BackgroundMode.NOTE -> {
+            baseModifier.background(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        gradientBluePosition01,
+                        gradientBluePosition02
+                    )
+                ),
+                shape = shape
             )
-            .testTag(data.componentId?.asString() ?: "")
+        }
+    }
+
+    AnimatedVisibility(
+        visible = isVisible.value,
+        enter = fadeIn() + slideInVertically(initialOffsetY = { fullHeight -> fullHeight / 4 }),
+        exit = fadeOut()
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.Top
+        Box(
+            modifier = boxModifier
+                .testTag(data.componentId?.asString() ?: "")
         ) {
-            Column(modifier = Modifier.wrapContentWidth()) {
-                data.icon?.let {
-                    SmallIconAtm(
-                        modifier = Modifier
-                            .semantics {
-                                if (it.accessibilityDescription == null) {
-                                    hideFromAccessibility()
-                                }
-                            },
-                        data = it,
-                        onUIAction = onUIAction
-                    )
-                }
-            }
-            Column(modifier = Modifier.padding(start = 8.dp)) {
-                data.text?.let {
-                    TextWithParametersAtom(
-                        modifier = Modifier,
-                        data = TextWithParametersData(
-                            actionKey = UIActionKeysCompose.TEXT_WITH_PARAMETERS,
-                            text = data.text,
-                            parameters = data.parameters
-                        ),
-                        style = DiiaTextStyle.t2TextDescription,
-                        onUIAction = onUIAction,
-                        maxLines = if (isExpanded.value == false) 3 else Int.MAX_VALUE
-                    )
-                }
-
-                if (data.hasExpandedData == true) {
-                    Row(modifier = Modifier.padding(top = 16.dp)) {
-                        val text = if (isExpanded.value == true) {
-                            data.collapsedText
-                        } else {
-                            data.expandedText
-                        }
-                        Text(
-                            modifier = Modifier.noRippleClickable {
-                                isExpanded.value = !(isExpanded.value ?: false)
-                            },
-                            text = text?.asString() ?: "",
-                            style = DiiaTextStyle.t3TextBody,
-                        )
-
-                        Spacer(modifier = Modifier.size(4.dp))
-                        Icon(
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.wrapContentWidth()) {
+                    data.icon?.let {
+                        SmallIconAtm(
                             modifier = Modifier
-                                .padding(start = 4.dp, top = 4.dp)
-                                .size(8.dp, 8.dp),
-                            painter = painterResource(
-                                id = if (isExpanded.value == true) {
-                                    R.drawable.ic_arrow_show_less
-                                } else {
-                                    R.drawable.ic_arrow_show_more
-                                }
-                            ),
-                            contentDescription = stringResource(R.string.details),
-                            tint = Black
+                                .semantics {
+                                    if (it.accessibilityDescription == null) {
+                                        hideFromAccessibility()
+                                    }
+                                },
+                            data = it,
+                            onUIAction = onUIAction
                         )
+                    }
+                }
+                Column(modifier = Modifier.padding(start = 8.dp)) {
+                    data.text?.let {
+                        TextWithParametersAtom(
+                            modifier = Modifier,
+                            data = TextWithParametersData(
+                                actionKey = UIActionKeysCompose.TEXT_WITH_PARAMETERS,
+                                text = data.text,
+                                parameters = data.parameters
+                            ),
+                            style = DiiaTextStyle.t2TextDescription,
+                            onUIAction = onUIAction,
+                            maxLines = if (isExpanded.value == false) 3 else Int.MAX_VALUE
+                        )
+                    }
+
+                    if (data.hasExpandedData == true) {
+                        Row(modifier = Modifier.padding(top = 16.dp)) {
+                            val text = if (isExpanded.value == true) {
+                                data.collapsedText
+                            } else {
+                                data.expandedText
+                            }
+                            Text(
+                                modifier = Modifier.noRippleClickable {
+                                    isExpanded.value = !(isExpanded.value ?: false)
+                                },
+                                text = text?.asString() ?: "",
+                                style = DiiaTextStyle.t3TextBody,
+                            )
+
+                            Spacer(modifier = Modifier.size(4.dp))
+                            Icon(
+                                modifier = Modifier
+                                    .padding(start = 4.dp, top = 4.dp)
+                                    .size(8.dp, 8.dp),
+                                painter = painterResource(
+                                    id = if (isExpanded.value == true) {
+                                        R.drawable.ic_arrow_show_less
+                                    } else {
+                                        R.drawable.ic_arrow_show_more
+                                    }
+                                ),
+                                contentDescription = stringResource(R.string.details),
+                                tint = Black
+                            )
+                        }
                     }
                 }
             }

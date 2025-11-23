@@ -8,6 +8,7 @@ sealed class MenuAction {
     object OpenHelpAction : MenuAction()
     object OpenDiiaId : MenuAction()
     object OpenSignHistory : MenuAction()
+    object OpenContracts : MenuAction()
     object OpenAppSessions : MenuAction()
     object OpenSupportAction : MenuAction()
     object OpenFAQAction : MenuAction()

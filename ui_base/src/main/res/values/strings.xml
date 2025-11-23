@@ -86,6 +86,7 @@
     <string name="menu_item_message_test_tag">message</string>
     <string name="menu_item_signature_test_tag">signature</string>
     <string name="menu_item_signature_history_test_tag">signature_history</string>
+    <string name="menu_item_contracts_test_tag">contracts</string>
     <string name="menu_item_settings_test_tag">settings</string>
     <string name="menu_item_update_app_test_tag">update_app</string>
     <string name="menu_item_connected_devices_test_tag">connected_devices</string>

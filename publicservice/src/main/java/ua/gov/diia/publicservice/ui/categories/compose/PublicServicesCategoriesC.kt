@@ -87,6 +87,10 @@ fun PublicServicesCategoriesC(
             is PublicServicesCategoriesNavigation.StartNewFlow -> {
                 homeNavigationActionFlow.tryEmit(PublicServiceHomeNavigation.StartNewFlow(navigation.deeplink))
             }
+
+            is PublicServicesCategoriesNavigation.NavigateToContracts -> {
+                homeNavigationActionFlow.tryEmit(PublicServiceHomeNavigation.NavigateToContracts())
+            }
         }
     }
 

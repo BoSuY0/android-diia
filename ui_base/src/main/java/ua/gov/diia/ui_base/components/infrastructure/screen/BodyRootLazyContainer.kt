@@ -199,6 +199,8 @@ import ua.gov.diia.ui_base.components.organism.block.TextBlockOrg
 import ua.gov.diia.ui_base.components.organism.block.TextBlockOrgData
 import ua.gov.diia.ui_base.components.organism.bottom.BottomGroupOrg
 import ua.gov.diia.ui_base.components.organism.bottom.BottomGroupOrgData
+import ua.gov.diia.ui_base.components.organism.bottom.BtnIconRoundedGroupOrg
+import ua.gov.diia.ui_base.components.organism.bottom.BtnIconRoundedGroupOrgData
 import ua.gov.diia.ui_base.components.organism.calendar.CalendarOrg
 import ua.gov.diia.ui_base.components.organism.calendar.CalendarOrgData
 import ua.gov.diia.ui_base.components.organism.carousel.ArticlePicCarouselOrg
@@ -727,6 +729,16 @@ fun ColumnScope.BodyRootLazyContainer(
                         }
                     }
 
+                    is BtnIconRoundedGroupOrgData -> {
+                        loadItem(BtnIconRoundedGroupOrgData::class) {
+                            BtnIconRoundedGroupOrg(
+                                modifier = modifier,
+                                data = element,
+                                onUIAction = onUIAction
+                            )
+                        }
+                    }
+
                     is MultipleChoiceGroupOrganismDataData -> {
                         loadItem(MultipleChoiceGroupOrganismDataData::class) {
                             MultipleChoiceGroupOrganism(
@@ -758,7 +770,7 @@ fun ColumnScope.BodyRootLazyContainer(
                         loadItem(SearchInputV2Data::class) {
                             SearchInputV2(
                                 data = element,
-                                focused = true,
+                                focused = containerType == ContainerType.PUBLIC_SERVICE,
                                 onUIAction = onUIAction
                             )
                         }

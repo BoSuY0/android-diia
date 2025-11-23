@@ -1,6 +1,7 @@
 package ua.gov.diia.opensource.util.deeplink
 
 import ua.gov.diia.core.models.deeplink.DeepLinkAction
+import ua.gov.diia.core.models.deeplink.DeepLinkActionJoinContract
 import ua.gov.diia.core.models.deeplink.DeepLinkActionOpenNotify
 import ua.gov.diia.core.models.deeplink.DeepLinkActionStartFlow
 import ua.gov.diia.core.models.deeplink.DeepLinkActionViewDocument
@@ -15,6 +16,14 @@ class AndroidDeepLinkActionFactory @Inject constructor() :
     DeepLinkActionFactory {
 
     override fun buildDeepLinkAction(path: String): DeepLinkAction {
+        if (path.startsWith(DEEP_LINK_CONTRACT)) {
+            val sessionId = path.removePrefix(DEEP_LINK_CONTRACT)
+                .trim('/')
+            if (sessionId.isNotBlank()) {
+                return DeepLinkActionJoinContract(sessionId)
+            }
+        }
+
         if (path.startsWith(DEEP_LINK_DOCUMENT_CHECK_PREFIX)) {
             val checkDocParams = path.split(SPLIT)
             if (checkDocParams.size > 1) {
@@ -64,6 +73,17 @@ class AndroidDeepLinkActionFactory @Inject constructor() :
             }
         }
 
+        if (path.startsWith("/contract/")) {
+            val params = path.split(SPLIT)
+            if (params.size > 2) {
+                val sessionId = params[2]
+                return DeepLinkActionStartFlow(
+                    "contract",
+                    sessionId
+                )
+            }
+        }
+
         val params = path.split(SPLIT)
         var flowId = DEEP_LINK_HOME
         var resId = Preferences.DEF
@@ -99,6 +119,7 @@ class AndroidDeepLinkActionFactory @Inject constructor() :
 
     companion object {
         private const val DEEP_LINK_HOME = "/home/"
+        private const val DEEP_LINK_CONTRACT = "/contract/"
         private const val DEEP_LINK_DOCUMENT_CHECK_PREFIX = "/documents/"
 
         private const val DEEP_LINK_MESSAGE = "/message/"

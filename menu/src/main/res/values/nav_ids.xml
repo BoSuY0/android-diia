@@ -5,6 +5,8 @@
     <item name="helpBaseF" type="id"/>
     <item name="settingsF" type="id"/>
     <item name="nav_diia_id" type="id"/>
+    <item name="nav_sign_history" type="id"/>
+    <item name="nav_contracts" type="id"/>
     <item name="nav_app_sessions" type="id"/>
     <item name="nav_notifications" type="id"/>
 </resources>

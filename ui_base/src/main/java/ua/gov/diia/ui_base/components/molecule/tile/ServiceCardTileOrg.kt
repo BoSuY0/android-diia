@@ -3,8 +3,10 @@ package ua.gov.diia.ui_base.components.molecule.tile
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
@@ -103,20 +105,21 @@ private fun LazyListScope.createRow(
                 ) {
                     val firstIndex = rowIndex * 2
                     val secondIndex = firstIndex + 1
+                    val hasSecond = secondIndex < items.size
 
-                    createCardMlc(
-                        modifier = Modifier
-                            .weight(1f),
-                        item = items[firstIndex],
-                        onUIAction = onUIAction
-                    )
+                    if (hasSecond) {
+                        createCardMlc(
+                            modifier = Modifier
+                                .weight(1f),
+                            item = items[firstIndex],
+                            onUIAction = onUIAction
+                        )
 
-                    Spacer(
-                        modifier = Modifier
-                            .width(8.dp)
-                    )
+                        Spacer(
+                            modifier = Modifier
+                                .width(8.dp)
+                        )
 
-                    if (secondIndex < items.size) {
                         createCardMlc(
                             modifier = Modifier
                                 .weight(1f),
@@ -124,9 +127,11 @@ private fun LazyListScope.createRow(
                             onUIAction = onUIAction
                         )
                     } else {
-                        Spacer(
+                        createCardMlc(
                             modifier = Modifier
-                                .weight(1f)
+                                .fillMaxWidth(),
+                            item = items[firstIndex],
+                            onUIAction = onUIAction
                         )
                     }
                 }

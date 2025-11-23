@@ -74,13 +74,16 @@ android {
         versionProps.load(this)
         close()
     }
-
     defaultConfig {
         applicationId = "ua.gov.diia.opensource"
         versionCode = versionProps["VERSION_CODE"].toString().toInt()
         versionName = versionProps["VERSION_NAME"].toString()
 
         buildConfigField("long", "TOKEN_LEEWAY", "1")
+        buildConfigField("boolean", "MOCK_MODE", "false")
+        buildConfigField("String", "CONTRACTS_BASE_URL", "\"\"")
+        buildConfigField("boolean", "CONTRACTS_BACKEND_ENABLED", "false")
+        buildConfigField("boolean", "FIREBASE_ENABLED", "true")
     }
 
     buildFeatures {
@@ -105,9 +108,28 @@ android {
             buildConfigField("String","BANK_ID_CALLBACK_URL","\"https://api2oss.diia.gov.ua/api/v1/auth/bank-id/code/callback\"")
             multiDexKeepProguard = file("multidex_keep_file.pro")
         }
+        create("mockDebug") {
+            initWith(getByName("debug"))
+            buildConfigField("boolean", "MOCK_MODE", "true")
+            matchingFallbacks += listOf("debug")
+        }
+        create("hackathon") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".hackathon"
+            versionNameSuffix = "-hackathon"
+            isMinifyEnabled = false
+            isShrinkResources = false
+            buildConfigField("boolean", "MOCK_MODE", "true")
+            buildConfigField("boolean", "CONTRACTS_BACKEND_ENABLED", "true")
+            buildConfigField("String", "CONTRACTS_BASE_URL", "\"https://diia-hakaton-3cf5fca76907.herokuapp.com\"")
+            buildConfigField("boolean", "FIREBASE_ENABLED", "false")
+            matchingFallbacks += listOf("debug")
+        }
     }
 
     configurations.configureEach {
+        // Drop legacy full OOXML schemas pulled by older converters to avoid duplicate classes with POI 5.x lite schemas
+        exclude(group = "org.apache.poi", module = "ooxml-schemas")
         resolutionStrategy {
             force(libs.okhttp)
             force(libs.okhttp.logging)
@@ -203,4 +225,7 @@ dependencies {
     gplayImplementation(libs.firebase.crashlytics)
     //Huawei SDK
     huaweiImplementation(libs.huawei.agconnect.crash)
+
+    // Compose Material 3
+    implementation(libs.androidx.compose.material3)
 }

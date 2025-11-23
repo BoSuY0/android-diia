@@ -65,7 +65,7 @@ fun BottomGroupOrg(
     Column(
         modifier = modifier
             .padding(
-                top = 8.dp,
+                top = 0.dp,
                 bottom = if (data.secondaryButton != null) 16.dp else 32.dp
             )
             .fillMaxWidth()

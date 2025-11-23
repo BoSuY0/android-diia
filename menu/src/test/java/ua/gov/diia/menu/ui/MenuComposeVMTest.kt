@@ -177,6 +177,14 @@ class MenuComposeVMTest {
                 menuComposeVM.onUIAction(
                     UIAction(
                         UIActionKeysCompose.LIST_ITEM_GROUP_ORG,
+                        action = DataActionWrapper(MenuActionsKey.OPEN_CONTRACTS)
+                    )
+                )
+                Assert.assertEquals(MenuAction.OpenContracts, awaitItem().peekContent())
+
+                menuComposeVM.onUIAction(
+                    UIAction(
+                        UIActionKeysCompose.LIST_ITEM_GROUP_ORG,
                         action = DataActionWrapper(MenuActionsKey.OPEN_APP_SESSIONS)
                     )
                 )

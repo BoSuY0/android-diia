@@ -17,12 +17,18 @@ import ua.gov.diia.ui_base.util.navigation.generateComposeNavigationPanel
 import ua.gov.diia.publicservice.helper.PublicServiceHelper
 import ua.gov.diia.publicservice.models.PublicService
 import ua.gov.diia.publicservice.models.PublicServiceCategory
+import ua.gov.diia.ui_base.components.DiiaResourceIcon
 import ua.gov.diia.ui_base.components.infrastructure.UIElementData
 import ua.gov.diia.ui_base.components.infrastructure.addIfNotNull
 import ua.gov.diia.ui_base.components.infrastructure.event.UIAction
 import ua.gov.diia.ui_base.components.infrastructure.event.UIActionKeysCompose
 import ua.gov.diia.ui_base.components.infrastructure.navigation.NavigationPath
+import ua.gov.diia.ui_base.components.infrastructure.utils.resource.UiIcon
 import ua.gov.diia.ui_base.components.infrastructure.utils.resource.UiText
+import ua.gov.diia.ui_base.components.molecule.button.BtnIconRoundedMlcData
+import ua.gov.diia.ui_base.components.molecule.input.SearchInputV2Data
+import ua.gov.diia.ui_base.components.organism.bottom.BtnIconRoundedGroupOrgData
+import ua.gov.diia.ui_base.components.organism.list.ListItemGroupOrgData
 import javax.inject.Inject
 
 @HiltViewModel
@@ -42,6 +48,9 @@ class PublicServiceCategoryDetailsComposeVM @Inject constructor(
     private val _bodyData = mutableStateListOf<UIElementData>()
     val bodyData: SnapshotStateList<UIElementData> = _bodyData
 
+    private val _bottomData = mutableStateListOf<UIElementData>()
+    val bottomData: SnapshotStateList<UIElementData> = _bottomData
+
     private val _navigation = MutableSharedFlow<NavigationPath>(
         extraBufferCapacity = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
@@ -50,6 +59,7 @@ class PublicServiceCategoryDetailsComposeVM @Inject constructor(
 
     private val _category = MutableLiveData<PublicServiceCategory>()
     val category = _category.asLiveData()
+    private var currentQuery: String? = null
 
     fun doInit(category: PublicServiceCategory) {
         clearContent()
@@ -61,7 +71,22 @@ class PublicServiceCategoryDetailsComposeVM @Inject constructor(
             )
         )
         _bodyData.addIfNotNull(
-            category.publicServices.toComposeListItemGroupOrg()
+            generateSearchInputMoleculeV2(
+                placeholder = "Пошук",
+                mode = 0
+            )
+        )
+        applySearch(null)
+
+        _bottomData.addIfNotNull(
+            BtnIconRoundedGroupOrgData(
+                items = listOf(
+                    BtnIconRoundedMlcData(
+                        id = "legalContractsSupport",
+                        icon = UiIcon.DrawableResource(DiiaResourceIcon.MESSAGE_CIRCLE.code)
+                    )
+                )
+            )
         )
     }
 
@@ -69,6 +94,11 @@ class PublicServiceCategoryDetailsComposeVM @Inject constructor(
         when (event.actionKey) {
             UIActionKeysCompose.TOOLBAR_NAVIGATION_BACK -> {
                 _navigation.tryEmit(BaseNavigation.Back)
+            }
+
+            UIActionKeysCompose.SEARCH_INPUT -> {
+                currentQuery = event.data
+                applySearch(currentQuery)
             }
 
             UIActionKeysCompose.LIST_ITEM_MLC,
@@ -97,6 +127,33 @@ class PublicServiceCategoryDetailsComposeVM @Inject constructor(
     private fun clearContent() {
         _toolBarData.clear()
         _bodyData.clear()
+        _bottomData.clear()
+    }
+
+    private fun applySearch(query: String?) {
+        val snapshot = _category.value ?: return
+        val services = snapshot.publicServices
+        val filtered = if (query.isNullOrBlank()) {
+            services
+        } else {
+            services.filter { service ->
+                service.search.contains(query, ignoreCase = true)
+            }
+        }
+        val listData = filtered.toComposeListItemGroupOrg()
+        val searchIndex = _bodyData.indexOfFirst { it is SearchInputV2Data }
+        val listIndex = _bodyData.indexOfFirst { it is ListItemGroupOrgData }
+
+        if (searchIndex != -1) {
+            _bodyData[searchIndex] =
+                (_bodyData[searchIndex] as SearchInputV2Data).onChange(query)
+        }
+
+        if (listIndex == -1) {
+            _bodyData.addIfNotNull(listData)
+        } else {
+            _bodyData[listIndex] = listData
+        }
     }
 }
 

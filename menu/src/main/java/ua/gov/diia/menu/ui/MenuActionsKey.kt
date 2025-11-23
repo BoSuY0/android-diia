@@ -5,6 +5,7 @@ object MenuActionsKey {
     const val OPEN_HELP = "OpenHelpAction"
     const val OPEN_DIIA_ID = "OpenDiiaId"
     const val OPEN_SIGNE_HISTORY = "OpenSignHistory"
+    const val OPEN_CONTRACTS = "OpenContracts"
     const val OPEN_APP_SESSIONS = "OpenAppSessions"
     const val OPEN_SUPPORT = "OpenSupportAction"
     const val OPEN_FAQ = "OpenFAQAction"

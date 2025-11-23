@@ -19,6 +19,7 @@ import ua.gov.diia.auth_bankid.network.ApiBankId
 import ua.gov.diia.core.util.delegation.WithErrorHandlingOnFlow
 import ua.gov.diia.core.util.delegation.WithRetryLastAction
 import ua.gov.diia.core.util.extensions.vm.executeActionOnFlow
+import ua.gov.diia.core.util.delegation.WithBuildConfig
 import ua.gov.diia.ui_base.components.DiiaResourceIcon
 import ua.gov.diia.ui_base.components.atom.space.SpacerAtmData
 import ua.gov.diia.ui_base.components.atom.space.SpacerAtmType
@@ -50,7 +51,8 @@ class BankSelectionVM @Inject constructor(
     @ProviderVerifiedClient private val apiBankId: ApiBankId,
     @ProviderVerifiedClient private val apiVerification: ApiVerification,
     private val errorHandling: WithErrorHandlingOnFlow,
-    private val retryLastAction: WithRetryLastAction
+    private val retryLastAction: WithRetryLastAction,
+    private val withBuildConfig: WithBuildConfig
 ) : ViewModel(),
     WithRetryLastAction by retryLastAction,
     WithErrorHandlingOnFlow by errorHandling {
@@ -91,6 +93,12 @@ class BankSelectionVM @Inject constructor(
     fun loadBanks() {
         _toolbarData.clear()
         _bodyData.clear()
+        if (isMockMode()) {
+            displayStaticPagePart()
+            _bodyData.add(mockBanks().mapToPlainItemListMolecule())
+            _bodyData.add(SpacerAtmData(SpacerAtmType.EXTRA_LARGE))
+            return
+        }
         executeActionOnFlow(contentLoadedIndicator = _contentLoaded.also {
             _contentLoadedKey.value = UIActionKeysCompose.PAGE_LOADING_TRIDENT_WITH_BACK_NAVIGATION
         }) {
@@ -183,6 +191,10 @@ class BankSelectionVM @Inject constructor(
     }
 
     private fun getAuthUrl(bankCode: String) {
+        if (isMockMode()) {
+            _navigation.tryEmit(Navigation.ToBankAuth(BankAuthRequest("https://example.com/mock", bankCode)))
+            return
+        }
         val request = bankSelectionRequest ?: return
         executeActionOnFlow(progressIndicator = _progressIndicator) {
             apiVerification.getAuthUrl(
@@ -221,6 +233,22 @@ class BankSelectionVM @Inject constructor(
             componentId = UiText.DynamicString(id ?: bankName)
         )
     }
+
+    private fun isMockMode(): Boolean {
+        val buildType = withBuildConfig.getBuildType()
+        val versionName = withBuildConfig.getVersionName()
+        return buildType.contains("mock", ignoreCase = true) ||
+            buildType.contains("hackathon", ignoreCase = true) ||
+            buildType.contains("debug", ignoreCase = true) ||
+            versionName.contains("mock", ignoreCase = true) ||
+            versionName.contains("hackathon", ignoreCase = true)
+    }
+
+    private fun mockBanks(): List<AuthBank> = listOf(
+        AuthBank(id = "privatbank", logoUrl = null, name = "ПриватБанк", workable = true),
+        AuthBank(id = "monobank", logoUrl = null, name = "monobank", workable = true),
+        AuthBank(id = "oschadbank", logoUrl = null, name = "Ощадбанк", workable = true)
+    )
 
     sealed class Navigation : NavigationPath {
         data class ToBankAuth(val data: BankAuthRequest) : Navigation()

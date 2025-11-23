@@ -55,7 +55,7 @@ fun BtnPrimaryDefaultAtm(
     }
     Button(
         modifier = modifier
-            .padding(top = 16.dp)
+            .padding(top = 8.dp)
             .defaultMinSize(minWidth = 160.dp)
             .testTag(data.componentId?.asString() ?: ""),
         colors = ButtonDefaults.buttonColors(
@@ -91,7 +91,7 @@ fun BtnPrimaryDefaultAtm(
             }
             Text(
                 modifier = Modifier
-                    .padding(top = 8.dp, bottom = 8.dp)
+                    .padding(top = 6.dp, bottom = 6.dp)
                     .alpha(if (isLoading.value) 0.0f else 1f),
                 text = data.title.asString(),
                 color = White,

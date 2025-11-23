@@ -6,7 +6,9 @@ import ua.gov.diia.core.util.extensions.fragment.findNavControllerById
 import ua.gov.diia.core.util.extensions.fragment.navigate
 import ua.gov.diia.menu.NavMenuActionsDirections
 import ua.gov.diia.menu.NavMenuActionsDirections.Companion.actionHomeFToDiiaId
+import ua.gov.diia.menu.NavMenuActionsDirections.Companion.actionHomeFToContracts
 import ua.gov.diia.menu.NavMenuActionsDirections.Companion.actionHomeFToNavAppSessions
+import ua.gov.diia.menu.NavMenuActionsDirections.Companion.actionHomeFToSignHistory
 import ua.gov.diia.menu.helper.MenuHelper
 import ua.gov.diia.opensource.NavMainDirections
 import ua.gov.diia.opensource.R
@@ -70,25 +72,42 @@ class MenuHelperImpl : MenuHelper {
                     fragment.getString(ua.gov.diia.menu.R.string.settings_dialog_logout_leave),
                 )
             ),
-            fragment.findNavControllerById(ua.gov.diia.menu.R.id.nav_host)
+            fragment.findNavControllerById(R.id.nav_host)
         )
     }
 
     override fun navigateToDiiaId(fragment: Fragment) {
         fragment.navigate(
             actionHomeFToDiiaId(),
-            fragment.findNavControllerById(ua.gov.diia.menu.R.id.nav_host),
+            fragment.findNavControllerById(R.id.nav_host),
         )
     }
 
     override fun navigateToSignHistory(fragment: Fragment) {
-        /* no-op */
+        fragment.navigate(
+            actionHomeFToSignHistory(),
+            fragment.findNavControllerById(R.id.nav_host),
+        )
+    }
+
+    override fun navigateToContracts(fragment: Fragment) {
+        fragment.navigate(
+            actionHomeFToContracts(null),
+            fragment.findNavControllerById(R.id.nav_host),
+        )
+    }
+
+    override fun navigateToCreateContract(fragment: Fragment) {
+        fragment.navigate(
+            NavMainDirections.actionHomeFToCreateContract(),
+            fragment.findNavControllerById(R.id.nav_host),
+        )
     }
 
     override fun navigateToAppSessions(fragment: Fragment) {
         fragment.navigate(
             actionHomeFToNavAppSessions(),
-            fragment.findNavControllerById(ua.gov.diia.menu.R.id.nav_host)
+            fragment.findNavControllerById(R.id.nav_host)
         )
     }
 
@@ -105,7 +124,7 @@ class MenuHelperImpl : MenuHelper {
                     fragment.getString(ua.gov.diia.menu.R.string.settings_dialog_support_cancel),
                 )
             ),
-            fragment.findNavControllerById(ua.gov.diia.menu.R.id.nav_host)
+            fragment.findNavControllerById(R.id.nav_host)
         )
     }
 

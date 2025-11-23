@@ -59,6 +59,15 @@ class MenuContentController @Inject constructor() {
                     type = MenuActionsKey.OPEN_SIGNE_HISTORY
                 ),
                 componentId = UiText.StringResource(R.string.menu_item_signature_history_test_tag)
+            ),
+            ListItemMlcData(
+                id = MenuActionsKey.OPEN_CONTRACTS,
+                label = UiText.StringResource(R.string.settings_contracts),
+                iconLeft = UiIcon.DrawableResource(DiiaResourceIcon.STACK_WHITE.code),
+                action = DataActionWrapper(
+                    type = MenuActionsKey.OPEN_CONTRACTS
+                ),
+                componentId = UiText.StringResource(R.string.menu_item_contracts_test_tag)
             )
         )
 

@@ -23,6 +23,7 @@ sealed class MenuHomeNavigation : HomeNavigation {
     data class ToLogout(override var isConsumed: Boolean = false) : MenuHomeNavigation()
     data class ToDiiaID(override var isConsumed: Boolean = false) : MenuHomeNavigation()
     data class ToSignHistory(override var isConsumed: Boolean = false) : MenuHomeNavigation()
+    data class ToContracts(override var isConsumed: Boolean = false) : MenuHomeNavigation()
     data class ToAppSession(override var isConsumed: Boolean = false) : MenuHomeNavigation()
     data class ToLinkDialog(override var isConsumed: Boolean = false) : MenuHomeNavigation()
 }

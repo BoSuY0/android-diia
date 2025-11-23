@@ -25,10 +25,9 @@ fun BtnIconRoundedGroupOrg(
 ) {
     Row(
         modifier = modifier
-            .padding(top = 8.dp)
-            .padding(horizontal = 20.dp)
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp, vertical = 24.dp),
+        horizontalArrangement = Arrangement.End
     ) {
         data.items.forEach {
             BtnIconRoundedMlc(data = it) {

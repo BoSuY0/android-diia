@@ -356,6 +356,12 @@ class HomeF @Inject constructor(
                 }
             }
 
+            is MenuHomeNavigation.ToContracts -> {
+                navigation.consumeEvent {
+                    viewModel.navigateToContracts(this@HomeF)
+                }
+            }
+
             is MenuHomeNavigation.ToSupport -> {
                 navigation.consumeEvent {
                     viewModel.navigateToSupport(this@HomeF)
@@ -404,13 +410,19 @@ class HomeF @Inject constructor(
 
             is PublicServiceHomeNavigation.OpenWebView -> {
                 navigation.consumeEvent {
-                    viewModel.navigateToWebView(this@HomeF, navigation.link)
+                    viewModel.navigateToWebViewUrl(this@HomeF, navigation.link)
                 }
             }
 
             is PublicServiceHomeNavigation.StartNewFlow -> {
                 navigation.consumeEvent {
                     viewModel.handleStartFlowDeeplink(navigation.deeplink)
+                }
+            }
+
+            is PublicServiceHomeNavigation.NavigateToContracts -> {
+                navigation.consumeEvent {
+                    viewModel.navigateToCreateContract(this@HomeF)
                 }
             }
         }

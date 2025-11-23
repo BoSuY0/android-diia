@@ -16,6 +16,7 @@
             android:defaultValue="@null"
             app:argType="string"
             app:nullable="true" />
+        <deepLink app:uri="diia://public_services_categories?forceOpenCategory={forceOpenCategory}" />
     </fragment>
 
 </navigation>

@@ -38,6 +38,7 @@ class PublicServiceCategoryDetailsComposeF : Fragment() {
         composeView?.setContent {
             val toolbar = viewModel.toolBarData
             val body = viewModel.bodyData
+            val bottom = viewModel.bottomData
             viewModel.navigation.collectAsEffect { navigation ->
                 when (navigation) {
                     is BaseNavigation.Back -> {
@@ -53,6 +54,7 @@ class PublicServiceCategoryDetailsComposeF : Fragment() {
             ServiceScreen(
                 toolbar = toolbar,
                 body = body,
+                bottom = bottom,
                 onEvent = {
                     viewModel.onUIAction(it)
                 })

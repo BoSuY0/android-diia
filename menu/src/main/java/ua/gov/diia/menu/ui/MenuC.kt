@@ -117,6 +117,10 @@ fun MenuC(
                 homeNavigationActionFlow.tryEmit(MenuHomeNavigation.ToSignHistory())
             }
 
+            MenuAction.OpenContracts -> {
+                homeNavigationActionFlow.tryEmit(MenuHomeNavigation.ToContracts())
+            }
+
             MenuAction.CopyDeviceUid -> {
             }
 
