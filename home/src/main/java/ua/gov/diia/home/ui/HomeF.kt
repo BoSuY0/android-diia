@@ -358,7 +358,7 @@ class HomeF @Inject constructor(
 
             is MenuHomeNavigation.ToContracts -> {
                 navigation.consumeEvent {
-                    viewModel.navigateToContracts(this@HomeF)
+                    viewModel.navigateToContracts(this@HomeF, openCreationMenu = false)
                 }
             }
 
@@ -422,7 +422,7 @@ class HomeF @Inject constructor(
 
             is PublicServiceHomeNavigation.NavigateToContracts -> {
                 navigation.consumeEvent {
-                    viewModel.navigateToCreateContract(this@HomeF)
+                    viewModel.navigateToContracts(this@HomeF, openCreationMenu = true)
                 }
             }
         }

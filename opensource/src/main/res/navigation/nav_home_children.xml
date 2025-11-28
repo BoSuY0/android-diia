@@ -26,7 +26,21 @@
 
     <fragment
         android:id="@+id/contractsFCompose"
-        android:name="ua.gov.diia.opensource.ui.compose.ContractsFCompose" />
+        android:name="ua.gov.diia.opensource.ui.compose.ContractsFCompose">
+        <argument
+            android:name="sessionId"
+            android:defaultValue="@null"
+            app:argType="string"
+            app:nullable="true" />
+        <argument
+            android:name="openDetails"
+            android:defaultValue="false"
+            app:argType="boolean" />
+        <argument
+            android:name="openCreationMenu"
+            android:defaultValue="false"
+            app:argType="boolean" />
+    </fragment>
 
     <action
         android:id="@+id/global_to_publicServicesFCompose"

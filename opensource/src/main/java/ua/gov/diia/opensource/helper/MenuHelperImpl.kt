@@ -90,16 +90,13 @@ class MenuHelperImpl : MenuHelper {
         )
     }
 
-    override fun navigateToContracts(fragment: Fragment) {
+    override fun navigateToContracts(fragment: Fragment, openCreationMenu: Boolean) {
         fragment.navigate(
-            actionHomeFToContracts(null),
-            fragment.findNavControllerById(R.id.nav_host),
-        )
-    }
-
-    override fun navigateToCreateContract(fragment: Fragment) {
-        fragment.navigate(
-            NavMainDirections.actionHomeFToCreateContract(),
+            actionHomeFToContracts(
+                sessionId = null,
+                openDetails = false,
+                openCreationMenu = openCreationMenu
+            ),
             fragment.findNavControllerById(R.id.nav_host),
         )
     }

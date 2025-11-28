@@ -9,7 +9,12 @@ import ua.gov.diia.opensource.NavMainDirections
 class DeepLinkActionJoinContractProcessor : SingleDeeplinkProcessor {
     override suspend fun handleDeepLinkAction(linkAction: DeepLinkAction): NavDirections? {
         val action = linkAction as DeepLinkActionJoinContract
-        return NavMainDirections.actionHomeFToContracts(sessionId = action.sessionId)
+        android.util.Log.d("DeepLinkJoinContract", "handleDeepLinkAction: sessionId=${action.sessionId}")
+        return NavMainDirections.actionHomeFToContracts(
+            sessionId = action.sessionId,
+            openDetails = false,
+            openCreationMenu = false
+        )
     }
 
     override fun isHandled(action: DeepLinkAction): Boolean = action is DeepLinkActionJoinContract

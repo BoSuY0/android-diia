@@ -84,6 +84,11 @@ android {
         buildConfigField("String", "CONTRACTS_BASE_URL", "\"\"")
         buildConfigField("boolean", "CONTRACTS_BACKEND_ENABLED", "false")
         buildConfigField("boolean", "FIREBASE_ENABLED", "true")
+        // Deep-link configuration for contracts sharing
+        buildConfigField("String", "DEEP_LINK_SCHEME", "\"https\"")
+        buildConfigField("String", "DEEP_LINK_HOST", "\"diia.app\"")
+        manifestPlaceholders["deepLinkScheme"] = "https"
+        manifestPlaceholders["deepLinkHost"] = "diia.app"
     }
 
     buildFeatures {
@@ -123,6 +128,13 @@ android {
             buildConfigField("boolean", "CONTRACTS_BACKEND_ENABLED", "true")
             buildConfigField("String", "CONTRACTS_BASE_URL", "\"https://diia-hakaton-3cf5fca76907.herokuapp.com\"")
             buildConfigField("boolean", "FIREBASE_ENABLED", "false")
+            // Deep-link: використовуємо URL бекенду для шарінгу, custom scheme для відкриття
+            buildConfigField("String", "DEEP_LINK_SCHEME", "\"https\"")
+            buildConfigField("String", "DEEP_LINK_HOST", "\"diia-hakaton-3cf5fca76907.herokuapp.com\"")
+            // Custom scheme для прямого відкриття з браузера
+            buildConfigField("String", "DEEP_LINK_CUSTOM_SCHEME", "\"diia-contracts\"")
+            manifestPlaceholders["deepLinkScheme"] = "diia-contracts"
+            manifestPlaceholders["deepLinkHost"] = "contract"
             matchingFallbacks += listOf("debug")
         }
     }

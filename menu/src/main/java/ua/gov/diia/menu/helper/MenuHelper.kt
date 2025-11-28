@@ -47,12 +47,7 @@ interface MenuHelper {
     /**
      * Navigate to legal contracts/services
      */
-    fun navigateToContracts(fragment: Fragment)
-
-    /**
-     * Navigate to create new contract flow
-     */
-    fun navigateToCreateContract(fragment: Fragment)
+    fun navigateToContracts(fragment: Fragment, openCreationMenu: Boolean = false)
 
     /**
      * Navigate to AppSessions flow

@@ -153,7 +153,7 @@ class MenuFCompose : Fragment() {
                     }
 
                     MenuAction.OpenContracts -> {
-                        menuHelper.navigateToContracts(this)
+                        menuHelper.navigateToContracts(this, openCreationMenu = false)
                     }
 
                     MenuAction.CopyDeviceUid -> {

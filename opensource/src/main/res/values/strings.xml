@@ -67,6 +67,15 @@
     <string name="diia_id_swipe_title">Підписати документ</string>
     <string name="diia_id_swipe_to_sign">Проведіть, щоб підписати</string>
     <string name="diia_id_swipe_hint">Зсув вправо підтверджує дію</string>
+    <string name="diia_id_tag_online">онлайн</string>
+    <string name="diia_id_tag_biometry_code">Face ID + код</string>
+    <string name="diia_id_tag_docs">Договори та заяви</string>
+    <string name="diia_id_security_flow_title">Швидка перевірка перед підписом</string>
+    <string name="diia_id_security_flow_face">Face ID / Touch ID</string>
+    <string name="diia_id_security_flow_code">Код підпису</string>
+    <string name="diia_id_security_flow_online">Онлайн перевірка</string>
+    <string name="diia_id_security_cloud_hint">Жодних файлів на носіях — усе в хмарі та в Дії.</string>
+    <string name="diia_id_progress_ready">%1$d%% готово</string>
 
     <string name="sign_history_title">Історія підписань</string>
     <string name="sign_history_subtitle">Останні дії з підписом</string>
@@ -100,8 +109,78 @@
     <string name="contracts_details_sign">Підписати договір</string>
     <string name="contracts_details_edit">Редагувати дані</string>
     <string name="contracts_details_share">Поширити</string>
+    <string name="contracts_download_saved">Договір збережено: %1$s</string>
     <string name="contracts_preview_error">Не вдалося завантажити попередній перегляд</string>
     <string name="contracts_preview_retry">Спробувати ще раз</string>
     <string name="contracts_share_message">Приєднуйся до договору в Дії: %1$s</string>
     <string name="contracts_share_error">Посилання на договір недоступне</string>
+    <string name="contracts_share_title">Посилання на договір</string>
+    <string name="contracts_share_description">Скопіюйте лінк та надішліть його іншій стороні.</string>
+    <string name="contracts_share_link_label">Посилання</string>
+    <string name="contracts_share_copied">Посилання скопійовано</string>
+
+    <!-- Contract Flow screens -->
+    <string name="contracts_create_legal_title">Створити юридичний договір</string>
+    <string name="contracts_search_placeholder">Пошук</string>
+    <string name="contracts_ai_promo_title">Не знайшли потрібний?</string>
+    <string name="contracts_ai_promo_subtitle">Створити кастомний договір за допомогою AI</string>
+    <string name="contracts_ai_chat_title">AI-чат для договорів</string>
+    <string name="contracts_ai_chat_placeholder">Опишіть, який договір вам потрібен</string>
+    <string name="contracts_ai_greeting">Привіт! Я AI-агент, який допоможе створити кастомний договір. Опишіть свою ситуацію або оберіть один із запитів нижче.</string>
+    <string name="contracts_ai_fallback_error">Не вдалося отримати відповідь. Спробуйте ще раз.</string>
+    <string name="contracts_filling_mode_title">Спосіб заповнення</string>
+    <string name="contracts_filling_mode_both_title">Заповнити за обидві сторони</string>
+    <string name="contracts_filling_mode_both_subtitle">Ви введете дані за себе та за іншу сторону договору.</string>
+    <string name="contracts_filling_mode_both_cta">Спільне редагування</string>
+    <string name="contracts_filling_mode_one_title">Заповнити тільки свою частину</string>
+    <string name="contracts_filling_mode_one_subtitle">Ви введете тільки свої дані. Інша сторона отримає посилання для заповнення своїх даних.</string>
+    <string name="contracts_filling_mode_one_cta">Посилання для другої сторони</string>
+    <string name="contracts_role_title">Ваша роль</string>
+    <string name="contracts_role_free">Вільна</string>
+    <string name="contracts_role_occupied">Зайнята</string>
+    <string name="contracts_terms_title">Умови договору</string>
+    <string name="contracts_terms_subtitle">Заповнює головна сторона. Дані додаються до договору для обох сторін.</string>
+    <string name="contracts_save_button">Зберегти дані</string>
+    <string name="contracts_save_success">Дані успішно збережено</string>
+    <string name="contracts_templates_title">Шаблони договорів</string>
+    <string name="contracts_templates_empty">Немає шаблонів для цієї категорії</string>
+    <string name="contracts_intro_skip">Більше не показувати це вікно</string>
+
+    <!-- Contract errors -->
+    <string name="contracts_error_role_occupied">Роль уже зайнята іншою стороною</string>
+    <string name="contracts_error_already_has_role">Ви вже вибрали іншу роль в цій сесії. Створіть новий договір для іншої ролі.</string>
+    <string name="contracts_error_session_create">Не вдалося створити сесію</string>
+    <string name="contracts_error_invalid_link">Некоректне посилання на договір</string>
+    <string name="contracts_error_join_failed">Не вдалося приєднатися до договору</string>
+    <string name="contracts_error_download_unavailable">Посилання на завантаження недоступне</string>
+    <string name="contracts_error_fill_required">Заповніть обов\'язкові поля: %1$s</string>
+    <string name="contracts_error_contract_not_ready">Контракт ще не готовий до побудови</string>
+    <string name="contracts_error_field_save">Помилка збереження поля %1$s</string>
+
+    <!-- AI Chat quick prompts -->
+    <string name="contracts_prompt_rent_title">Скласти договір оренди житла</string>
+    <string name="contracts_prompt_rent_subtitle">Готовий каркас з ключовими пунктами</string>
+    <string name="contracts_prompt_employment_title">Підготувати трудовий договір</string>
+    <string name="contracts_prompt_employment_subtitle">Зберемо вимоги по оплаті та строках</string>
+    <string name="contracts_prompt_liability_title">Пояснити пункт про відповідальність сторін</string>
+    <string name="contracts_prompt_liability_subtitle">Розділимо складні формулювання на прості кроки</string>
+
+    <!-- Contract Role Menu -->
+    <string name="contracts_role_menu_title">Вибір ролі</string>
+    <string name="contracts_role_menu_heading">Оберіть сторону договору</string>
+    <string name="contracts_role_menu_subtitle_both">Ви можете вказати дані для обох сторін.</string>
+    <string name="contracts_role_menu_subtitle_one">Оберіть свою сторону, далі заповните її дані.</string>
+    <string name="contracts_role_your_role">Ваша роль</string>
+    <string name="contracts_role_available_types">Доступні типи: %1$s</string>
+    <string name="contracts_role_select_type">Оберіть тип сторони</string>
+    
+    <!-- Contract Form -->
+    <string name="contracts_format_title">Формат заповнення</string>
+    <string name="contracts_format_subtitle">Оберіть, як будете вносити дані до договору.</string>
+    <string name="contracts_person_type_label">Тип сторони</string>
+    <string name="contracts_person_type_select">Оберіть тип особи</string>
+
+    <!-- Intro screen -->
+    <string name="contracts_intro_welcome">Вітаємо! 👋</string>
+    <string name="contracts_intro_start">Розпочати</string>
 </resources>

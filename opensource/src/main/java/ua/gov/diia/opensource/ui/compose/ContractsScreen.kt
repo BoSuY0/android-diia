@@ -8,6 +8,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -85,7 +86,8 @@ fun ContractsScreen(
                 Surface(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(top = 12.dp),
+                        .padding(top = 12.dp)
+                        .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)),
                     shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
                     color = White,
                     tonalElevation = 0.dp
@@ -152,7 +154,7 @@ private fun ContractsHeader(
                 .fillMaxWidth()
                 .background(
                     brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFF0E0E0E), Color(0xFF141924))
+                        colors = listOf(Color(0xFFF5F7FA), Color(0xFFFFFFFF))
                     )
                 )
                 .statusBarsPadding()
@@ -166,19 +168,19 @@ private fun ContractsHeader(
                     onClick = onBackClick,
                     modifier = Modifier
                         .size(38.dp)
-                        .background(WhiteAlpha20, CircleShape)
+                        .background(BlackAlpha10, CircleShape)
                 ) {
                     Icon(
                         painter = painterResource(id = UiBaseR.drawable.ic_arrow_back),
                         contentDescription = null,
-                        tint = White
+                        tint = Black
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = stringResource(id = R.string.contracts_title),
                     style = DiiaTextStyle.h3SmallHeading.copy(fontWeight = FontWeight.SemiBold),
-                    color = White
+                    color = Black
                 )
             }
 
@@ -186,12 +188,12 @@ private fun ContractsHeader(
                 Text(
                     text = stringResource(id = R.string.contracts_title),
                     style = DiiaTextStyle.heroText,
-                    color = White
+                    color = Black
                 )
                 Text(
                     text = stringResource(id = R.string.contracts_subtitle),
                     style = DiiaTextStyle.t1BigText,
-                    color = WhiteAlpha70
+                    color = BlackAlpha54
                 )
             }
 
@@ -213,19 +215,20 @@ private fun RowScope.StatBadge(label: String, value: Int) {
         modifier = Modifier
             .weight(1f)
             .clip(RoundedCornerShape(14.dp))
-            .background(WhiteAlpha20)
+            .background(White)
+            .border(1.dp, BlackAlpha10, RoundedCornerShape(14.dp))
             .padding(horizontal = 12.dp, vertical = 12.dp)
     ) {
         Text(
             text = value.toString(),
             style = DiiaTextStyle.h2MediumHeading.copy(fontWeight = FontWeight.Bold),
-            color = White
+            color = Black
         )
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = label,
             style = DiiaTextStyle.t3TextBody,
-            color = WhiteAlpha70
+            color = BlackAlpha54
         )
     }
 }
@@ -286,6 +289,7 @@ private fun FiltersRow(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ContractCard(
     contract: ContractUiModel,
@@ -295,7 +299,8 @@ private fun ContractCard(
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .shadow(12.dp, RoundedCornerShape(18.dp), clip = false),
+            .shadow(12.dp, RoundedCornerShape(18.dp), clip = true)
+            .clip(RoundedCornerShape(18.dp)),
         shape = RoundedCornerShape(18.dp),
         color = White,
         tonalElevation = 0.dp
@@ -347,13 +352,14 @@ private fun ContractCard(
                     painter = painterResource(id = UiBaseR.drawable.ic_arrow_right),
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),
-                    tint = Black
+                    tint = Color.Unspecified
                 )
             }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 StatusBadge(style = statusStyle)
                 MetaBadge(
@@ -361,7 +367,11 @@ private fun ContractCard(
                     iconRes = UiBaseR.drawable.ic_time_black_square
                 )
                 when {
-                    contract.isSigned -> MetaBadge(text = stringResource(id = R.string.contracts_meta_signed))
+                    contract.isSigned -> MetaBadge(
+                        text = stringResource(id = R.string.contracts_meta_signed),
+                        backgroundColor = Color(0xFFFFF3CD), // Світло-жовтий фон
+                        textColor = Color(0xFF856404) // Темно-жовтий текст
+                    )
                     !contract.isFilled -> MetaBadge(text = stringResource(id = R.string.contracts_meta_draft))
                 }
             }
@@ -395,12 +405,17 @@ private fun StatusBadge(style: ContractStatusStyle) {
 @Composable
 private fun MetaBadge(
     text: String,
-    iconRes: Int? = null
+    iconRes: Int? = null,
+    backgroundColor: Color? = null,
+    textColor: Color? = null
 ) {
+    val bgColor = backgroundColor ?: BlackAlpha10
+    val contentColor = textColor ?: BlackAlpha80
+    
     Row(
         modifier = Modifier
             .clip(RoundedCornerShape(10.dp))
-            .background(BlackAlpha10)
+            .background(bgColor)
             .padding(horizontal = 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -410,13 +425,13 @@ private fun MetaBadge(
                 painter = painterResource(id = it),
                 contentDescription = null,
                 modifier = Modifier.size(14.dp),
-                tint = BlackAlpha80
+                tint = contentColor
             )
         }
         Text(
             text = text,
             style = DiiaTextStyle.t3TextBody,
-            color = BlackAlpha80,
+            color = contentColor,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis
         )

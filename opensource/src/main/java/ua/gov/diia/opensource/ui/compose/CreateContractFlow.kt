@@ -26,6 +26,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.indication
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.LocalIndication
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -35,15 +36,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,7 +58,10 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import ua.gov.diia.opensource.R
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -82,18 +90,24 @@ import ua.gov.diia.ui_base.components.organism.list.ListItemGroupOrg
 import ua.gov.diia.ui_base.components.organism.list.ListItemGroupOrgData
 import ua.gov.diia.ui_base.components.theme.Alabaster
 import ua.gov.diia.ui_base.components.theme.AshGrey
+import ua.gov.diia.ui_base.components.theme.BlackSqueeze
 import ua.gov.diia.ui_base.components.theme.AzureRadiance
+import ua.gov.diia.ui_base.components.theme.AzureMist
 import ua.gov.diia.ui_base.components.theme.Black
+import ua.gov.diia.ui_base.components.theme.gradientBluePosition01
+import ua.gov.diia.ui_base.components.theme.gradientBluePosition02
 import ua.gov.diia.ui_base.components.theme.BlackAlpha10
 import ua.gov.diia.ui_base.components.theme.BlackAlpha20
+import ua.gov.diia.ui_base.components.theme.BlackAlpha30
 import ua.gov.diia.ui_base.components.theme.BlackAlpha80
 import ua.gov.diia.ui_base.components.theme.BlackAlpha54
+import ua.gov.diia.ui_base.components.theme.WhiteAlpha30
 import ua.gov.diia.ui_base.components.theme.DiiaTextStyle
 import ua.gov.diia.ui_base.components.theme.TropicalBlue
 import ua.gov.diia.ui_base.components.theme.White
 import ua.gov.diia.ui_base.components.theme.WhiteAlpha20
+import ua.gov.diia.ui_base.components.theme.WhiteAlpha70
 import ua.gov.diia.ui_base.R as UiBaseR
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -108,214 +122,98 @@ fun LegalContractsScreen(
     contractCategories: List<ContractCategory> = emptyList(),
     onBackClick: () -> Unit,
     onContractSelected: (String) -> Unit,
-    onAiChatClick: () -> Unit
+    onAiChatClick: () -> Unit,
+    isLoading: Boolean = false
 ) {
     var searchQuery by remember { mutableStateOf("") }
 
-    val filteredContracts = contractCategories.filter { it.title.contains(searchQuery, ignoreCase = true) }
+    val filteredContracts = contractCategories.filter { 
+        it.title.contains(searchQuery, ignoreCase = true) 
+    }
 
-    Box(
+    // Використовуємо стандартні компоненти Дії
+    val listData = ListItemGroupOrgData(
+        itemsList = filteredContracts.map { contract ->
+            ListItemMlcData(
+                id = contract.id,
+                label = UiText.DynamicString(contract.title),
+                iconLeft = UiIcon.DrawableResource(DiiaResourceIcon.STACK_WHITE.code),
+                iconRight = UiIcon.DrawableResource(DiiaResourceIcon.ELLIPSE_ARROW_RIGHT.code),
+                action = DataActionWrapper(type = contract.id),
+                componentId = UiText.DynamicString("contract_item_${contract.id}")
+            )
+        },
+        componentId = UiText.DynamicString("contracts_list"),
+        paddingTop = TopPaddingMode.NONE,
+        paddingHorizontal = SidePaddingMode.LARGE
+    )
+
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = androidx.compose.ui.graphics.Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFD2EBF7),
-                        Color(0xFFE9F5E5)
-                    )
-                )
-            )
+            .background(BlackSqueeze) // Стандартний фон Дії
+            .statusBarsPadding()
     ) {
-        Column(
+        // Navigation Panel - стандартний компонент
+        DiiaNavigationPanel(
+            title = stringResource(R.string.contracts_create_legal_title),
+            onBackClick = onBackClick
+        )
+
+        // Основний контент
+        LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .statusBarsPadding()
-                .padding(horizontal = 16.dp)
+                .weight(1f),
+            contentPadding = PaddingValues(vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Top Bar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 32.dp, bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = onBackClick,
-                    modifier = Modifier.size(24.dp)
-                ) {
-                    Icon(
-                        painter = painterResource(id = UiBaseR.drawable.ic_arrow_back),
-                        contentDescription = "Back",
-                        tint = Black
-                    )
-                }
-                Spacer(modifier = Modifier.width(16.dp))
+            // Заголовок для вибору категорії
+            item {
                 Text(
-                    text = "Створити юридичний договір",
-                    style = DiiaTextStyle.h3SmallHeading.copy(fontWeight = FontWeight.Bold),
-                    color = Black
+                    text = "Оберіть категорію",
+                    style = DiiaTextStyle.h2MediumHeading,
+                    color = Black,
+                    modifier = Modifier.padding(horizontal = 24.dp)
                 )
             }
 
-            // Search Bar (аналогічно SearchInputV2: невеликий відступ зверху)
-            TextField(
-                value = searchQuery,
-                onValueChange = { searchQuery = it },
-                placeholder = {
-                    Text(
-                        text = "Пошук",
-                        style = DiiaTextStyle.t1BigText,
-                        color = BlackAlpha54
-                    )
-                },
-                leadingIcon = {
-                    Icon(
-                        painter = painterResource(id = UiBaseR.drawable.ic_search_black),
-                        contentDescription = "Search",
-                        tint = BlackAlpha54
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(White),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = White,
-                    unfocusedContainerColor = White,
-                    disabledContainerColor = White,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    cursorColor = Black,
-                    focusedTextColor = Black,
-                    unfocusedTextColor = Black
-                ),
-                singleLine = true,
-                textStyle = DiiaTextStyle.t1BigText
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Grouped List using standard ListItemGroupOrg
-            if (filteredContracts.isNotEmpty()) {
-                val listData = ListItemGroupOrgData(
-                    itemsList = filteredContracts.map { contract ->
-                        ListItemMlcData(
-                            id = contract.id,
-                            label = UiText.DynamicString(contract.title),
-                            iconRight = UiIcon.DrawableResource(DiiaResourceIcon.ELLIPSE_ARROW_RIGHT.code),
-                            action = DataActionWrapper(type = contract.id),
-                            componentId = UiText.DynamicString("legal_contract_item_${'$'}{contract.id}")
-                        )
-                    },
-                    componentId = UiText.DynamicString("legal_contracts_list"),
-                    paddingTop = TopPaddingMode.MEDIUM,
-                    paddingHorizontal = SidePaddingMode.NONE
+            // Search Input
+            item {
+                DiiaSearchInput(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = stringResource(R.string.contracts_search_placeholder),
+                    modifier = Modifier.padding(horizontal = 24.dp)
                 )
+            }
 
-                ListItemGroupOrg(
-                    data = listData,
-                    onUIAction = { action: UIAction ->
-                        if (action.actionKey == UIActionKeysCompose.LIST_ITEM_GROUP_ORG ||
-                            action.actionKey == UIActionKeysCompose.LIST_ITEM_MLC
-                        ) {
-                            val id = action.data ?: action.action?.type
-                            if (!id.isNullOrEmpty()) {
-                                onContractSelected(id)
+            // Список категорій - стандартний ListItemGroupOrg
+            if (filteredContracts.isNotEmpty()) {
+                item {
+                    ListItemGroupOrg(
+                        data = listData,
+                        onUIAction = { action: UIAction ->
+                            if (action.actionKey == UIActionKeysCompose.LIST_ITEM_GROUP_ORG ||
+                                action.actionKey == UIActionKeysCompose.LIST_ITEM_MLC
+                            ) {
+                                val id = action.data ?: action.action?.type
+                                if (!id.isNullOrEmpty()) {
+                                    onContractSelected(id)
+                                }
                             }
                         }
-                    }
-                )
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            val promoShape = RoundedCornerShape(16.dp)
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(10.dp, promoShape, clip = false)
-                    .clip(promoShape)
-                    .clickable { onAiChatClick() },
-                color = Color.Transparent
-            ) {
-                Row(
-                    modifier = Modifier
-                        .background(
-                            brush = Brush.linearGradient(
-                                colors = listOf(AzureRadiance, TropicalBlue)
-                            )
-                        )
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(36.dp)
-                                .background(WhiteAlpha20, CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                painter = painterResource(id = UiBaseR.drawable.ic_faq),
-                                contentDescription = null,
-                                tint = White,
-                                modifier = Modifier.size(18.dp)
-                            )
-                        }
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            Text(
-                                text = "Не знайшли потрібний?",
-                                style = DiiaTextStyle.t2TextDescription.copy(fontWeight = FontWeight.SemiBold),
-                                color = White
-                            )
-                            Text(
-                                text = "Створити кастомний договір за допомогою AI",
-                                style = DiiaTextStyle.t3TextBody,
-                                color = White.copy(alpha = 0.92f)
-                            )
-                        }
-                    }
-
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(White.copy(alpha = 0.16f), CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            painter = painterResource(id = UiBaseR.drawable.ic_arrow_right),
-                            contentDescription = null,
-                            tint = White,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
+                    )
                 }
             }
-        }
 
-        // Chat FAB
-        Box(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(24.dp)
-        ) {
-            FloatingActionButton(
-                onClick = { /* TODO: Open support chat */ },
-                containerColor = Black,
-                contentColor = White,
-                shape = androidx.compose.foundation.shape.CircleShape,
-                modifier = Modifier.size(56.dp)
-            ) {
-                Icon(
-                    painter = painterResource(id = UiBaseR.drawable.ic_faq),
-                    contentDescription = "Support",
-                    modifier = Modifier.size(24.dp)
+            // AI Promo Banner
+            item {
+                DiiaAiPromoBanner(
+                    title = stringResource(R.string.contracts_ai_promo_title),
+                    subtitle = stringResource(R.string.contracts_ai_promo_subtitle),
+                    onClick = onAiChatClick,
+                    modifier = Modifier.padding(horizontal = 24.dp)
                 )
             }
         }
@@ -327,11 +225,17 @@ fun ContractAiChatScreen(
     messages: List<ContractChatMessage>,
     isSending: Boolean,
     onSendMessage: (String) -> Unit,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    onNewChatClick: () -> Unit,
+    onActionClick: (ChatAction) -> Unit = {}
 ) {
     var inputText by remember { mutableStateOf("") }
     val coroutineScope = rememberCoroutineScope()
     val hasUserMessages = messages.any { it.isUser }
+    val sendScale by animateFloatAsState(
+        targetValue = if (inputText.isNotBlank() && !isSending) 1.0f else 0.94f,
+        animationSpec = tween(180, easing = FastOutSlowInEasing)
+    )
 
     fun sendMessage(content: String) {
         val text = content.trim()
@@ -341,156 +245,157 @@ fun ContractAiChatScreen(
     }
 
     val quickPrompts = listOf(
-        "Скласти договір оренди житла" to "Готовий каркас з ключовими пунктами",
-        "Підготувати трудовий договір" to "Зберемо вимоги по оплаті та строках",
-        "Пояснити пункт про відповідальність сторін" to "Розділимо складні формулювання на прості кроки"
+        stringResource(R.string.contracts_prompt_rent_title) to stringResource(R.string.contracts_prompt_rent_subtitle),
+        stringResource(R.string.contracts_prompt_employment_title) to stringResource(R.string.contracts_prompt_employment_subtitle),
+        stringResource(R.string.contracts_prompt_liability_title) to stringResource(R.string.contracts_prompt_liability_subtitle)
     )
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFE6F0FF),
-                        Color(0xFFE9F6ED)
-                    )
-                )
-            )
+            .background(BlackSqueeze)
+            .statusBarsPadding()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-        ) {
-            // Top bar
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+        DiiaNavigationPanel(
+            title = stringResource(R.string.contracts_ai_chat_title),
+            onBackClick = onBackClick,
+            trailingContent = {
                 IconButton(
-                    onClick = onBackClick,
-                    modifier = Modifier.size(24.dp)
+                    onClick = onNewChatClick,
+                    modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
-                        painter = painterResource(id = UiBaseR.drawable.ic_arrow_back),
-                        contentDescription = "Back",
-                        tint = Black
+                        painter = painterResource(id = UiBaseR.drawable.ic_doc_edit_adress),
+                        contentDescription = "Новий чат",
+                        tint = Black,
+                        modifier = Modifier.size(22.dp)
                     )
                 }
-                Spacer(modifier = Modifier.width(16.dp))
-                Text(
-                    text = "AI-чат для договорів",
-                    style = DiiaTextStyle.h3SmallHeading.copy(fontWeight = FontWeight.Bold),
-                    color = Black
+            }
+        )
+
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 24.dp),
+            contentPadding = PaddingValues(vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            itemsIndexed(messages, key = { _, item -> item.id }) { _, message ->
+                ContractChatMessageBubble(
+                    message = message,
+                    onActionClick = onActionClick
                 )
             }
+        }
 
-            LazyColumn(
+        // Нижній блок вводу - стиль Дії
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .imePadding(),
+            color = White,
+            shadowElevation = 8.dp,
+            shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
+        ) {
+            Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(vertical = 12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                    .fillMaxWidth()
+                    .navigationBarsPadding()
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                itemsIndexed(messages, key = { _, item -> item.id }) { _, message ->
-                    ContractChatMessageBubble(message = message)
-                }
-            }
-
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                color = White.copy(alpha = 0.98f),
-                shadowElevation = 18.dp,
-                shape = RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp)
-            ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .navigationBarsPadding()
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                // Швидкі промпти
+                AnimatedVisibility(
+                    visible = !hasUserMessages,
+                    enter = fadeIn(tween(250, easing = FastOutSlowInEasing)) + expandVertically(),
+                    exit = fadeOut(tween(200, easing = FastOutLinearInEasing)) + shrinkVertically()
                 ) {
-                    AnimatedVisibility(
-                        visible = !hasUserMessages,
-                        enter = fadeIn(tween(250, easing = FastOutSlowInEasing)) + expandVertically(),
-                        exit = fadeOut(tween(200, easing = FastOutLinearInEasing)) + shrinkVertically()
-                    ) {
-                        QuickPromptPicker(
-                            quickPrompts = quickPrompts,
-                            onPick = { selection -> sendMessage(selection) }
-                        )
-                    }
+                    QuickPromptPicker(
+                        quickPrompts = quickPrompts,
+                        onPick = { selection -> sendMessage(selection) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                brush = Brush.linearGradient(
+                                    listOf(Color(0xFFEAF3FF), Color(0xFFF9F7FF))
+                                ),
+                                shape = RoundedCornerShape(16.dp)
+                            )
+                    )
+                }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                // Поле вводу
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    // Текстове поле - стиль Дії
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .defaultMinSize(minHeight = 48.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        color = White,
+                        border = BorderStroke(1.dp, BlackAlpha10)
                     ) {
-                        val inputShape = RoundedCornerShape(12.dp)
-                        OutlinedTextField(
-                            value = inputText,
-                            onValueChange = { inputText = it },
+                        Row(
                             modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = 48.dp),
-                            keyboardOptions = KeyboardOptions(
-                                capitalization = KeyboardCapitalization.Sentences,
-                                autoCorrect = true,
-                                keyboardType = KeyboardType.Text,
-                                imeAction = ImeAction.Send
-                            ),
-                            keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                                onSend = { sendMessage(inputText) }
-                            ),
-                            placeholder = {
-                                Text(
-                                    text = "Опишіть, який договір вам потрібен",
-                                    style = DiiaTextStyle.t3TextBody,
-                                    color = BlackAlpha54
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Box(modifier = Modifier.weight(1f)) {
+                                if (inputText.isEmpty()) {
+                                    Text(
+                                        text = stringResource(R.string.contracts_ai_chat_placeholder),
+                                        style = DiiaTextStyle.t2TextDescription,
+                                        color = BlackAlpha54
+                                    )
+                                }
+                                androidx.compose.foundation.text.BasicTextField(
+                                    value = inputText,
+                                    onValueChange = { inputText = it },
+                                    textStyle = DiiaTextStyle.t2TextDescription.copy(color = Black),
+                                    singleLine = true,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    keyboardOptions = KeyboardOptions(
+                                        capitalization = KeyboardCapitalization.Sentences,
+                                        imeAction = ImeAction.Send
+                                    ),
+                                    keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                                        onSend = { sendMessage(inputText) }
+                                    )
                                 )
-                            },
-                            singleLine = true,
-                            maxLines = 1,
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedContainerColor = White,
-                                unfocusedContainerColor = White,
-                                disabledContainerColor = White,
-                                focusedBorderColor = Black,
-                                unfocusedBorderColor = Color(0xFFCBD5E1),
-                                disabledBorderColor = Color(0xFFCBD5E1),
-                                cursorColor = Black,
-                                focusedTextColor = Black,
-                                unfocusedTextColor = Black
-                            ),
-                            shape = inputShape,
-                            textStyle = DiiaTextStyle.t3TextBody,
-                            enabled = true,
-                            readOnly = false
-                        )
-
-                    Spacer(modifier = Modifier.width(10.dp))
-
+                            }
+                        }
+                    }
+                    
+                    // Кнопка надсилання - стиль Дії
                     FilledIconButton(
                         onClick = { sendMessage(inputText) },
                         enabled = inputText.isNotBlank() && !isSending,
-                        shape = RoundedCornerShape(12.dp),
+                        shape = RoundedCornerShape(14.dp),
                         colors = IconButtonDefaults.filledIconButtonColors(
                             containerColor = Black,
                             contentColor = White,
-                            disabledContainerColor = Black.copy(alpha = 0.2f),
-                            disabledContentColor = White
+                            disabledContainerColor = BlackAlpha10,
+                            disabledContentColor = BlackAlpha54
                         ),
-                        modifier = Modifier.size(44.dp)
+                        modifier = Modifier
+                            .size(48.dp)
+                            .graphicsLayer {
+                                scaleX = sendScale
+                                scaleY = sendScale
+                            }
                     ) {
                         Icon(
                             painter = painterResource(id = UiBaseR.drawable.ic_role_arrow_up),
                             contentDescription = "Надіслати",
-                            modifier = Modifier.size(16.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
-                }
                 }
             }
         }
@@ -503,16 +408,10 @@ fun LegalContractsIntroScreen(
     onStartClick: () -> Unit,
     onSkipIntroChange: (Boolean) -> Unit = {}
 ) {
-    val gradient = Brush.verticalGradient(
-        colors = listOf(
-            Color(0xFFD7E7F5),
-            Color(0xFFE7F4ED)
-        )
-    )
     val introText = """
         Тут ви зможете швидко зібрати юридичний договір. Що підготувати:
         • дані сторін: ПІБ/назва, контакти, РНОКПП або ЄДРПОУ;
-        • адресу та короткий опис об’єкта (квартира, будинок тощо);
+        • адресу та короткий опис об'єкта (квартира, будинок тощо);
         • фінанси: щомісячну суму, завдаток (якщо є), дедлайн оплати;
         • строки дії договору (початок, кінець або безстроково).
 
@@ -523,79 +422,72 @@ fun LegalContractsIntroScreen(
 
     var skipIntro by remember { mutableStateOf(false) }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(gradient)
+            .background(BlackSqueeze)
+            .statusBarsPadding()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
-        ) {
-            TopBar(title = "Юридичні договори", onBackClick = onBackClick)
+        // Navigation Panel - стиль Дії
+        DiiaNavigationPanel(
+            title = "Юридичні договори",
+            onBackClick = onBackClick
+        )
 
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)
-            ) {
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        LazyColumn(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(bottom = 24.dp)
+        ) {
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Заголовок
+                    Text(
+                        text = stringResource(R.string.contracts_intro_welcome),
+                        style = DiiaTextStyle.h2MediumHeading,
+                        color = Black
+                    )
+                    // Картка з інформацією - стиль Дії
+                    Surface(
+                        shape = RoundedCornerShape(16.dp),
+                        color = White
+                    ) {
                         Text(
-                            text = "Вітаємо! 👋",
-                            style = DiiaTextStyle.h2MediumHeading,
-                            color = Black
+                            text = introText,
+                            style = DiiaTextStyle.t2TextDescription.copy(
+                                lineHeight = DiiaTextStyle.t2TextDescription.fontSize * 1.4f
+                            ),
+                            color = Black,
+                            modifier = Modifier.padding(16.dp)
                         )
-                        Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = White,
-                            shadowElevation = 6.dp,
-                            border = BorderStroke(1.dp, Color(0xFFE1E7F5))
-                        ) {
-                            Text(
-                                text = introText,
-                                style = DiiaTextStyle.t3TextBody.copy(lineHeight = DiiaTextStyle.t3TextBody.fontSize * 1.3f),
-                                color = Black,
-                                modifier = Modifier.padding(16.dp)
-                            )
-                        }
                     }
                 }
             }
+        }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-            ) {
-                SkipIntroToggle(
-                    checked = skipIntro,
-                    onCheckedChange = {
-                        skipIntro = it
-                        onSkipIntroChange(it)
-                    },
-                    modifier = Modifier.padding(bottom = 10.dp)
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Black, RoundedCornerShape(16.dp))
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable(onClick = onStartClick)
-                        .padding(vertical = 16.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Розпочати",
-                        style = DiiaTextStyle.t1BigText.copy(fontWeight = FontWeight.SemiBold),
-                        color = White
-                    )
-                }
-            }
+        // Нижній блок з кнопкою - стиль Дії
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 24.dp, vertical = 16.dp)
+        ) {
+            // Чекбокс "Більше не показувати"
+            DiiaCheckbox(
+                checked = skipIntro,
+                onCheckedChange = {
+                    skipIntro = it
+                    onSkipIntroChange(it)
+                },
+                label = stringResource(R.string.contracts_intro_skip),
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+            // Кнопка "Розпочати" - стиль Дії
+            DiiaPrimaryButton(
+                text = stringResource(R.string.contracts_intro_start),
+                onClick = onStartClick
+            )
         }
     }
 }
@@ -649,7 +541,15 @@ private fun SkipIntroToggle(
                 contentAlignment = Alignment.Center
             ) {
                 with(this@rowScope) {
-                    AnimatedVisibility(visible = checked) {
+                    AnimatedVisibility(
+                        visible = checked,
+                        enter = fadeIn(animationSpec = tween(150)) + expandVertically(
+                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                        ),
+                        exit = fadeOut(animationSpec = tween(100)) + shrinkVertically(
+                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow)
+                        )
+                    ) {
                         Icon(
                             imageVector = Icons.Filled.Check,
                             contentDescription = null,
@@ -660,7 +560,7 @@ private fun SkipIntroToggle(
                 }
             }
             Text(
-                text = "Більше не показувати це вікно",
+                text = stringResource(R.string.contracts_intro_skip),
                 style = DiiaTextStyle.t3TextBody,
                 color = Black
             )
@@ -676,71 +576,65 @@ fun ContractFillingModeScreen(
     val options = listOf(
         ModeOption(
             id = "both_sides",
-            title = "Заповнити за обидві сторони",
-            subtitle = "Ви введете дані за себе та за іншу сторону договору.",
-            cta = "Спільне редагування"
+            title = stringResource(R.string.contracts_filling_mode_both_title),
+            subtitle = stringResource(R.string.contracts_filling_mode_both_subtitle),
+            cta = stringResource(R.string.contracts_filling_mode_both_cta)
         ),
         ModeOption(
             id = "one_side",
-            title = "Заповнити тільки свою частину",
-            subtitle = "Ви введете тільки свої дані. Інша сторона отримає посилання для заповнення своїх даних.",
-            cta = "Посилання для другої сторони"
+            title = stringResource(R.string.contracts_filling_mode_one_title),
+            subtitle = stringResource(R.string.contracts_filling_mode_one_subtitle),
+            cta = stringResource(R.string.contracts_filling_mode_one_cta)
         )
     )
     var selectedId by remember { mutableStateOf(options.first().id) }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFD7E7F5),
-                        Color(0xFFE7F4ED)
-                    )
-                )
-            )
+            .background(BlackSqueeze)
+            .statusBarsPadding()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
+        // Navigation Panel - стиль Дії
+        DiiaNavigationPanel(
+            title = stringResource(R.string.contracts_filling_mode_title),
+            onBackClick = onBackClick
+        )
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            TopBar(title = "Спосіб заповнення", onBackClick = onBackClick)
-
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            text = "Формат заповнення",
-                            style = DiiaTextStyle.h2MediumHeading,
-                            color = Black
-                        )
-                        Text(
-                            text = "Оберіть, як будете вносити дані до договору.",
-                            style = DiiaTextStyle.t2TextDescription,
-                            color = BlackAlpha54
-                        )
-                    }
-                }
-
-                items(options) { option ->
-                    ModeCard(
-                        option = option,
-                        isSelected = selectedId == option.id,
-                        onSelect = {
-                            selectedId = option.id
-                            when (option.id) {
-                                "both_sides" -> onModeSelected(true)
-                                "one_side" -> onModeSelected(false)
-                            }
-                        }
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = stringResource(R.string.contracts_format_title),
+                        style = DiiaTextStyle.h2MediumHeading,
+                        color = Black
+                    )
+                    Text(
+                        text = stringResource(R.string.contracts_format_subtitle),
+                        style = DiiaTextStyle.t2TextDescription,
+                        color = BlackAlpha54
                     )
                 }
+            }
+
+            items(options) { option ->
+                DiiaOptionCard(
+                    title = option.title,
+                    subtitle = option.subtitle,
+                    cta = option.cta,
+                    isSelected = selectedId == option.id,
+                    onClick = {
+                        selectedId = option.id
+                        when (option.id) {
+                            "both_sides" -> onModeSelected(true)
+                            "one_side" -> onModeSelected(false)
+                        }
+                    }
+                )
             }
         }
     }
@@ -759,77 +653,72 @@ fun ContractRoleMenuScreen(
     personTypes: List<ContractPersonType>,
     clientId: String,
     isBothSides: Boolean,
-    mainRoleId: String? = null,
     onBackClick: () -> Unit,
     onRoleSelected: (String) -> Unit
 ) {
     val uiPersonTypes = remember(personTypes) {
-        if (personTypes.isNotEmpty()) {
-            personTypes.map { it.toUiPersonType() }
-        } else {
-            leasePersonTypes()
-        }
+        personTypes.map { it.toUiPersonType() }
     }
     val roleForms = remember(roles, uiPersonTypes, clientId) {
         roles.map { role ->
             val allowedIds = role.allowedPersonTypes.takeIf { it.isNotEmpty() } ?: uiPersonTypes.map { it.id }
             val allowedLabels = uiPersonTypes.filter { allowedIds.contains(it.id) }.joinToString(", ") { it.label }
-            val occupied = role.claimedBy != null && role.claimedBy != clientId
+            val occupiedByOther = role.claimedBy != null && role.claimedBy != clientId
+            val ownedByMe = role.claimedBy == clientId
             RoleForm(
                 id = role.id,
                 title = role.label.ifBlank { role.id },
                 description = if (allowedLabels.isNotEmpty()) "Доступні типи: $allowedLabels" else "Оберіть тип сторони",
-                isOccupied = occupied
+                isOccupied = occupiedByOther,
+                isOwnedByMe = ownedByMe
             )
         }
     }
 
-    Box(
+    Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(
-                brush = Brush.verticalGradient(
-                    colors = listOf(
-                        Color(0xFFD7E7F5),
-                        Color(0xFFE7F4ED)
-                    )
-                )
-            )
+            .background(BlackSqueeze)
+            .statusBarsPadding()
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .statusBarsPadding()
+        // Navigation Panel - стиль Дії
+        DiiaNavigationPanel(
+            title = stringResource(R.string.contracts_role_menu_title),
+            onBackClick = onBackClick
+        )
+
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            TopBar(title = "Вибір ролі", onBackClick = onBackClick)
-
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                item {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            text = "Оберіть сторону договору",
-                            style = DiiaTextStyle.h2MediumHeading,
-                            color = Black
-                        )
-                        Text(
-                            text = if (isBothSides) "Ви можете вказати дані для обох сторін. Почніть з основної." else "Оберіть свою сторону, далі заповните її дані.",
-                            style = DiiaTextStyle.t2TextDescription,
-                            color = BlackAlpha54
-                        )
-                    }
-                }
-
-                items(roleForms) { role ->
-                    RoleMenuCard(
-                        role = role,
-                        isMain = role.id == mainRoleId,
-                        onSelect = { if (!role.isOccupied) onRoleSelected(role.id) }
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = stringResource(R.string.contracts_role_menu_heading),
+                        style = DiiaTextStyle.h2MediumHeading,
+                        color = Black
+                    )
+                    Text(
+                        text = stringResource(if (isBothSides) R.string.contracts_role_menu_subtitle_both else R.string.contracts_role_menu_subtitle_one),
+                        style = DiiaTextStyle.t2TextDescription,
+                        color = BlackAlpha54
                     )
                 }
+            }
+
+            items(roleForms) { role ->
+                DiiaRoleCard(
+                    title = role.title,
+                    description = role.description,
+                    isOccupied = role.isOccupied,
+                    isOwnedByMe = role.isOwnedByMe,
+                    onClick = { 
+                        if (!role.isOccupied || role.isOwnedByMe) {
+                            onRoleSelected(role.id)
+                        }
+                    }
+                )
             }
         }
     }
@@ -838,24 +727,28 @@ fun ContractRoleMenuScreen(
 @Composable
 private fun RoleMenuCard(
     role: RoleForm,
-    isMain: Boolean = false,
     onSelect: () -> Unit
 ) {
-    val statusText = if (role.isOccupied) "Зайнята" else if (isMain) "Головна" else "Вільна"
+    val statusText = when {
+        role.isOwnedByMe -> stringResource(R.string.contracts_role_your_role)
+        role.isOccupied -> stringResource(R.string.contracts_role_occupied)
+        else -> stringResource(R.string.contracts_role_free)
+    }
     val statusColor = when {
+        role.isOwnedByMe -> Color(0xFF2196F3) // Blue for owned
         role.isOccupied -> Color(0xFFE74C3C)
-        isMain -> Color(0xFF123264)
         else -> Color(0xFF1E9E55)
     }
-    val alphaBg = if (role.isOccupied) 0.06f else 0.12f
+    val alphaBg = if (role.isOccupied && !role.isOwnedByMe) 0.06f else 0.12f
+    val isClickable = !role.isOccupied || role.isOwnedByMe
     Surface(
         onClick = onSelect,
-        enabled = !role.isOccupied,
+        enabled = isClickable,
         shape = RoundedCornerShape(14.dp),
         tonalElevation = 0.dp,
         shadowElevation = 6.dp,
         color = White,
-        border = BorderStroke(1.dp, if (role.isOccupied) BlackAlpha10 else BlackAlpha20)
+        border = BorderStroke(1.dp, if (!isClickable) BlackAlpha10 else BlackAlpha20)
     ) {
         Column(
             modifier = Modifier
@@ -948,15 +841,6 @@ private fun ModeCta(
     )
 }
 
-data class ContractDraft(
-    val contractType: String,
-    val roleId: String,
-    val roleTitle: String,
-    val personTypeId: String,
-    val personTypeLabel: String,
-    val fields: Map<String, String>
-)
-
 @Composable
 fun ContractRoleSelectionScreen(
     contractType: String,
@@ -970,13 +854,28 @@ fun ContractRoleSelectionScreen(
     onRemoteSave: suspend (roleId: String, personTypeId: String, fields: Map<String, String>) -> ContractUiModel? = { _, _, _ -> null },
     onPartyContextChanged: suspend (roleId: String, personTypeId: String) -> Unit = { _, _ -> },
     isBothSides: Boolean,
-    mainRoleId: String? = null,
     initialSelectedRoleId: String? = null,
-    isLoading: Boolean = false
+    isLoading: Boolean = false,
+    backendError: String? = null,
+    onClearError: () -> Unit = {}
 ) {
+    val context = LocalContext.current
     val uiPersonTypes = remember(roles, personTypes) {
         when {
-            personTypes.isNotEmpty() -> personTypes.map { it.toUiPersonType() }
+            personTypes.isNotEmpty() -> {
+                // Персон-типи є, але поля беремо з roles для більш точного відображення
+                val roleFieldsMap = roles.associate { role ->
+                    (role.personType ?: role.id) to role.fields.map { it.toUiField() }
+                }
+                personTypes.map { pt ->
+                    val fieldsFromRole = roleFieldsMap[pt.id]?.takeIf { it.isNotEmpty() }
+                    if (fieldsFromRole != null) {
+                        pt.toUiPersonType().copy(fields = fieldsFromRole)
+                    } else {
+                        pt.toUiPersonType()
+                    }
+                }
+            }
             roles.any { it.fields.isNotEmpty() } -> {
                 roles.map { role ->
                     PersonType(
@@ -986,17 +885,13 @@ fun ContractRoleSelectionScreen(
                     )
                 }
             }
-            else -> leasePersonTypes()
+            else -> emptyList()
         }
     }
     val rolesMap = roles.associateBy { it.id }
     val hasSchemaPersonTypes = personTypes.isNotEmpty()
     val roleForms = remember(roles, uiPersonTypes, clientId) {
-        val source = roles.takeIf { it.isNotEmpty() } ?: listOf(
-            ContractPartyRole(id = "role_1", label = "Сторона 1", allowedPersonTypes = emptyList()),
-            ContractPartyRole(id = "role_2", label = "Сторона 2", allowedPersonTypes = emptyList())
-        )
-        source.map { role ->
+        roles.map { role ->
             val allowedIds = role.allowedPersonTypes.takeIf { it.isNotEmpty() } ?: uiPersonTypes.map { it.id }
             val allowedLabels = uiPersonTypes.filter { allowedIds.contains(it.id) }.joinToString(", ") { it.label }
             val occupied = role.claimedBy != null && role.claimedBy != clientId
@@ -1019,28 +914,64 @@ fun ContractRoleSelectionScreen(
     fun personTypesForRole(roleId: String): List<PersonType> {
         val base = allowedTypesForRole(roleId)
         val contextMatch = partyContext?.takeIf { it.roleId == roleId }
-        return if (contextMatch != null) {
-            val contextFields = contextMatch.fields.map { it.toUiField() }
-            base.map { type ->
-                if (type.id == contextMatch.personTypeId) type.copy(fields = contextFields) else type
+        // Беремо поля з ролі як fallback, якщо partyContext недоступний
+        val roleFields = rolesMap[roleId]?.fields?.map { it.toUiField() }
+        val roleLabel = rolesMap[roleId]?.label ?: roleId
+        val rolePersonType = rolesMap[roleId]?.personType ?: "individual"
+        
+        return when {
+            contextMatch != null && contextMatch.fields.isNotEmpty() -> {
+                val contextFields = contextMatch.fields.map { it.toUiField() }
+                if (base.isNotEmpty()) {
+                    base.map { type ->
+                        if (type.id == contextMatch.personTypeId) type.copy(fields = contextFields) else type
+                    }
+                } else {
+                    // Якщо base порожній, створюємо персон-тип з полями контексту
+                    listOf(PersonType(id = contextMatch.personTypeId, label = roleLabel, fields = contextFields))
+                }
             }
-        } else {
-            base
+            roleFields != null && roleFields.isNotEmpty() -> {
+                // Використовуємо поля з ролі як fallback
+                val selectedType = rolesMap[roleId]?.personType ?: base.firstOrNull()?.id ?: rolePersonType
+                if (base.isNotEmpty()) {
+                    base.map { type ->
+                        if (type.id == selectedType || base.size == 1) type.copy(fields = roleFields) else type
+                    }
+                } else {
+                    // Якщо base порожній, створюємо персон-тип з полями ролі
+                    listOf(PersonType(id = selectedType, label = roleLabel, fields = roleFields))
+                }
+            }
+            else -> base
         }
     }
 
     // For new contracts, auto-select first role; for editing, use provided role or let user choose
-    val selectedRoleId = remember { 
-        mutableStateOf(
-            when {
-                // If editing with a specific role selected
-                !initialSelectedRoleId.isNullOrBlank() -> initialSelectedRoleId
-                // For new contracts, auto-select first role
-                initialSelectedRoleId == null && roleForms.isNotEmpty() -> roleForms.first().id
-                // Otherwise, no selection
-                else -> ""
+    var selectedRoleId by rememberSaveable { 
+        mutableStateOf(initialSelectedRoleId.orEmpty())
+    }
+
+    // If the screen was opened before roles arrived (e.g. edit flow), align the selection once data is here
+    LaunchedEffect(initialSelectedRoleId, roleForms) {
+        val claimedByMe = roles.firstOrNull { it.claimedBy == clientId }?.id
+        when {
+            selectedRoleId.isNotBlank() -> {
+                // If previously selected role disappeared (unlikely), fallback to first available
+                if (roleForms.isNotEmpty() && roleForms.none { it.id == selectedRoleId }) {
+                    selectedRoleId = roleForms.firstOrNull()?.id.orEmpty()
+                }
             }
-        )
+            !initialSelectedRoleId.isNullOrBlank() && roleForms.any { it.id == initialSelectedRoleId } -> {
+                selectedRoleId = initialSelectedRoleId
+            }
+            !claimedByMe.isNullOrBlank() && roleForms.any { it.id == claimedByMe } -> {
+                selectedRoleId = claimedByMe
+            }
+            roleForms.isNotEmpty() -> {
+                selectedRoleId = roleForms.first().id
+            }
+        }
     }
     val selectedPersonType = remember {
         mutableStateMapOf<String, String>().apply {
@@ -1054,13 +985,41 @@ fun ContractRoleSelectionScreen(
         }
     }
     val roleFieldValues = remember { mutableStateMapOf<String, SnapshotStateMap<String, String>>() }
+    // Ініціалізуємо значення договору безпосередньо з contractFields (ключ = key -> value)
     val contractTermsValues = remember { mutableStateMapOf<String, String>() }
     val contractTermsFieldList = remember(contractFields) {
         val backendFields = contractFields.takeIf { it.isNotEmpty() }?.map { it.toUiField() }
-        backendFields ?: contractTermsFields()
+        backendFields ?: emptyList()
     }
+    
+    // Застосовуємо збережені значення з contractFields (приходять з бекенду)
+    // Використовуємо snapshotFlow для більш надійної синхронізації
+    LaunchedEffect(contractFields) {
+        android.util.Log.d("ContractFlow", "LaunchedEffect(contractFields): size=${contractFields.size}")
+        contractFields.forEach { field ->
+            val fieldValue = field.value
+            android.util.Log.d("ContractFlow", "  Field: key=${field.key}, value=$fieldValue, status=${field.status}")
+            if (!fieldValue.isNullOrEmpty()) {
+                contractTermsValues[field.key] = fieldValue
+                android.util.Log.d("ContractFlow", "  -> Saved to contractTermsValues[${field.key}] = $fieldValue")
+            }
+        }
+        android.util.Log.d("ContractFlow", "contractTermsValues after update: $contractTermsValues")
+    }
+    
+    // Додатковий SideEffect для синхронізації значень при кожній recomposition
+    SideEffect {
+        contractFields.forEach { field ->
+            val fieldValue = field.value
+            if (!fieldValue.isNullOrEmpty() && contractTermsValues[field.key] != fieldValue) {
+                contractTermsValues[field.key] = fieldValue
+            }
+        }
+    }
+    
     var saveSuccessMessage by remember { mutableStateOf<String?>(null) }
     var validationError by remember { mutableStateOf<String?>(null) }
+    var errorTimestamp by remember { mutableStateOf(0L) }
     var showSuccessDialog by remember { mutableStateOf(false) }
     var lastSavedContract by remember { mutableStateOf<ContractUiModel?>(null) }
     val coroutineScope = rememberCoroutineScope()
@@ -1078,31 +1037,43 @@ fun ContractRoleSelectionScreen(
             }
         }
         // For new contracts only (not editing), auto-select first role if none selected
-        if (initialSelectedRoleId == null && selectedRoleId.value.isBlank() && roleForms.isNotEmpty()) {
-            selectedRoleId.value = roleForms.first().id
+        if (initialSelectedRoleId == null && selectedRoleId.isBlank() && roleForms.isNotEmpty()) {
+            selectedRoleId = roleForms.first().id
         }
     }
 
-    val currentPersonTypeId = selectedPersonType[selectedRoleId.value]
+    val currentPersonTypeId = selectedPersonType[selectedRoleId]
 
-    LaunchedEffect(selectedRoleId.value, currentPersonTypeId) {
-        if (!selectedRoleId.value.isNullOrEmpty() && !currentPersonTypeId.isNullOrEmpty()) {
-            onPartyContextChanged(selectedRoleId.value, currentPersonTypeId.orEmpty())
+    // Завантажуємо дані при кожному відкритті екрану та при зміні ролі/типу
+    LaunchedEffect(Unit, selectedRoleId, currentPersonTypeId) {
+        if (!selectedRoleId.isNullOrEmpty() && !currentPersonTypeId.isNullOrEmpty()) {
+            onPartyContextChanged(selectedRoleId, currentPersonTypeId.orEmpty())
         }
     }
 
+    // Допоміжна функція для нормалізації ключів (видалення префікса ролі)
+    fun normalizeFieldKey(roleId: String, key: String): String {
+        return when {
+            key.startsWith("$roleId.") -> key.removePrefix("$roleId.")
+            key.contains(".") -> key.substringAfterLast(".")
+            else -> key
+        }
+    }
+    
     LaunchedEffect(partyContext) {
         if (partyContext != null &&
-            partyContext.roleId == selectedRoleId.value &&
+            partyContext.roleId == selectedRoleId &&
             partyContext.personTypeId == currentPersonTypeId
         ) {
-            val fieldValues = roleFieldValues.getOrPut(selectedRoleId.value) { mutableStateMapOf() }
+            val fieldValues = roleFieldValues.getOrPut(selectedRoleId) { mutableStateMapOf() }
             val contractKeys = contractTermsFieldList.map { it.key }.toSet()
             partyContext.fields.forEach { field ->
                 if (!field.value.isNullOrEmpty()) {
-                    fieldValues[field.key] = field.value.orEmpty()
-                    if (contractKeys.contains(field.key)) {
-                        contractTermsValues[field.key] = field.value.orEmpty()
+                    // Нормалізуємо ключ - бекенд може повертати "lessor.name", а UI очікує "name"
+                    val normalizedKey = normalizeFieldKey(partyContext.roleId, field.key)
+                    fieldValues[normalizedKey] = field.value.orEmpty()
+                    if (contractKeys.contains(normalizedKey)) {
+                        contractTermsValues[normalizedKey] = field.value.orEmpty()
                     }
                 }
             }
@@ -1116,19 +1087,30 @@ fun ContractRoleSelectionScreen(
         }
     }
 
-    LaunchedEffect(roles) {
+    // Застосовуємо значення полів з roles (приходять з бекенду через sessionParties)
+    LaunchedEffect(roles, partyContext) {
+        android.util.Log.d("ContractFlow", "LaunchedEffect(roles, partyContext): roles.size=${roles.size}, partyContext=$partyContext")
         val contractKeys = contractTermsFieldList.map { it.key }.toSet()
         roles.forEach { role ->
+            android.util.Log.d("ContractFlow", "  Role: id=${role.id}, fields.size=${role.fields.size}")
             val initialFields = role.fields.filter { !it.value.isNullOrEmpty() }
+            android.util.Log.d("ContractFlow", "  Role ${role.id}: initialFields with value: ${initialFields.size}")
             if (initialFields.isNotEmpty()) {
                 val stateMap = roleFieldValues.getOrPut(role.id) { mutableStateMapOf() }
                 initialFields.forEach { field ->
                     val value = field.value.orEmpty()
-                    stateMap[field.key] = value
-                    if (contractKeys.contains(field.key)) {
-                        contractTermsValues[field.key] = value
+                    // Нормалізуємо ключ - бекенд може повертати "lessor.name", а UI очікує "name"
+                    val normalizedKey = normalizeFieldKey(role.id, field.key)
+                    stateMap[normalizedKey] = value
+                    android.util.Log.d("ContractFlow", "    -> roleFieldValues[${role.id}][$normalizedKey] = $value")
+                    if (contractKeys.contains(normalizedKey)) {
+                        contractTermsValues[normalizedKey] = value
                     }
                 }
+            }
+            // Логуємо всі поля ролі для діагностики
+            role.fields.forEach { field ->
+                android.util.Log.d("ContractFlow", "    Field: key=${field.key}, value=${field.value}, status=${field.status}")
             }
         }
     }
@@ -1136,36 +1118,41 @@ fun ContractRoleSelectionScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF3F4F6))
+            .background(BlackSqueeze)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
         ) {
-            TopBar(title = "Ваша роль", onBackClick = onBackClick)
+            DiiaNavigationPanel(
+                title = stringResource(R.string.contracts_role_title),
+                onBackClick = onBackClick
+            )
 
             val contentModifier = Modifier
                 .weight(1f)
                 .fillMaxWidth()
 
-            val formSections = remember(roleForms, isBothSides, selectedRoleId.value, mainRoleId) {
+            // Умови договору доступні для будь-якої ролі, оскільки всі ролі рівноправні
+            val hasContractTerms = contractTermsFieldList.isNotEmpty()
+            val formSections = remember(roleForms, isBothSides, selectedRoleId, hasContractTerms) {
                 val sections = mutableListOf<FormSection>()
                 val multiRoleMode = isBothSides
                 if (multiRoleMode) {
                     roleForms.forEach {
                         sections.add(FormSection(id = it.id, title = it.title, isContractTerms = false))
                     }
-                    if (!mainRoleId.isNullOrEmpty()) {
+                    if (hasContractTerms) {
                         sections.add(
                             FormSection(
                                 id = contractTermsSectionId,
-                                title = "Умови договору",
+                                title = context.getString(R.string.contracts_terms_title),
                                 isContractTerms = true
                             )
                         )
                     }
                 } else {
-                    val roleId = selectedRoleId.value
+                    val roleId = selectedRoleId
                     if (roleId.isNotBlank()) {
                         val roleTitle = roleForms.firstOrNull { it.id == roleId }?.title ?: roleId
                         sections.add(
@@ -1175,11 +1162,11 @@ fun ContractRoleSelectionScreen(
                                 isContractTerms = false
                             )
                         )
-                        if (roleId == mainRoleId) {
+                        if (hasContractTerms) {
                             sections.add(
                                 FormSection(
                                     id = contractTermsSectionId,
-                                    title = "Умови договору",
+                                    title = context.getString(R.string.contracts_terms_title),
                                     isContractTerms = true
                                 )
                             )
@@ -1190,13 +1177,13 @@ fun ContractRoleSelectionScreen(
             }
             var selectedSectionId by remember {
                 mutableStateOf(
-                    selectedRoleId.value.takeIf { id ->
+                    selectedRoleId.takeIf { id ->
                         id.isNotBlank() && formSections.any { it.id == id }
                     } ?: formSections.firstOrNull()?.id.orEmpty()
                 )
             }
             LaunchedEffect(formSections) {
-                val preferredSection = selectedRoleId.value.takeIf { id ->
+                val preferredSection = selectedRoleId.takeIf { id ->
                     id.isNotBlank() && formSections.any { it.id == id }
                 }
                 selectedSectionId = preferredSection ?: formSections.firstOrNull()?.id.orEmpty()
@@ -1204,11 +1191,34 @@ fun ContractRoleSelectionScreen(
 
             Column(
                 modifier = contentModifier
+                    .background(BlackSqueeze)
                     .padding(horizontal = 16.dp, vertical = 16.dp)
                     .verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 IdentityReminderNote()
+
+                if (roleForms.isEmpty()) {
+                    if (isLoading) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    } else {
+                        Text(
+                            text = backendError ?: "Не вдалося завантажити ролі. Спробуйте повернутися та відкрити ще раз.",
+                            style = DiiaTextStyle.t2TextDescription,
+                            color = BlackAlpha80,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                    // Не будуємо решту UI, якщо немає ролей
+                    return@Column
+                }
 
                 val showSectionSelector = formSections.size > 1
                 if (showSectionSelector) {
@@ -1218,14 +1228,21 @@ fun ContractRoleSelectionScreen(
                         onSelect = { sectionId ->
                             selectedSectionId = sectionId
                             if (sectionId != contractTermsSectionId) {
-                                selectedRoleId.value = sectionId
+                                selectedRoleId = sectionId
                             }
                         }
                     )
                 }
 
+                // Логуємо стан перед відображенням
+                android.util.Log.d("ContractFlow", "Rendering section: selectedSectionId=$selectedSectionId, contractTermsSectionId=$contractTermsSectionId")
+                android.util.Log.d("ContractFlow", "  formSections: ${formSections.map { "${it.id}:${it.title}" }}")
+                android.util.Log.d("ContractFlow", "  contractTermsFieldList.size=${contractTermsFieldList.size}")
+                android.util.Log.d("ContractFlow", "  contractTermsValues=$contractTermsValues")
+                
                 when {
                     selectedSectionId == contractTermsSectionId -> {
+                        android.util.Log.d("ContractFlow", "  -> Showing ContractTermsCard with ${contractTermsFieldList.size} fields")
                         ContractTermsCard(
                             values = contractTermsValues,
                             fields = contractTermsFieldList
@@ -1233,8 +1250,10 @@ fun ContractRoleSelectionScreen(
                     }
                     selectedSectionId.isNotBlank() -> {
                         val role = roleForms.firstOrNull { it.id == selectedSectionId }
+                        android.util.Log.d("ContractFlow", "  -> Showing RoleCardWithForm for role=${role?.id}, personTypes=${personTypesForRole(role?.id.orEmpty()).size}")
                         if (role != null) {
                             val availableTypes = personTypesForRole(role.id)
+                            android.util.Log.d("ContractFlow", "    availableTypes: ${availableTypes.map { "${it.id}: ${it.fields.size} fields" }}")
                             RoleCardWithForm(
                                 role = role,
                                 personTypes = availableTypes,
@@ -1250,29 +1269,32 @@ fun ContractRoleSelectionScreen(
                 }
             }
 
+            // Нижня панель з кнопкою на тому ж рівні що і форма (без тіней)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .background(White)
                     .padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                // Показуємо помилки від бекенду (валідація полів) та локальні помилки
+                val displayError = backendError ?: validationError
                 when {
-                    validationError != null -> ErrorBanner(message = validationError!!)
+                    displayError != null -> ErrorBanner(
+                        message = displayError,
+                        showTimestamp = errorTimestamp,
+                        onDismiss = {
+                            validationError = null
+                            onClearError()
+                        }
+                    )
                     saveSuccessMessage != null -> SaveSuccessBanner(message = saveSuccessMessage!!)
                 }
 
-                val currentRole = roleForms.firstOrNull { it.id == selectedRoleId.value }
+                val currentRole = roleForms.firstOrNull { it.id == selectedRoleId }
                 val currentPersonTypeId = currentRole?.let {
                     selectedPersonType[it.id] ?: personTypesForRole(it.id).firstOrNull()?.id.orEmpty()
                 }.orEmpty()
-                val isCurrentRoleMain = currentRole?.let {
-                    if (!mainRoleId.isNullOrEmpty()) {
-                        mainRoleId == it.id
-                    } else {
-                        // Fallback: assume first role is main if not specified
-                        roleForms.firstOrNull()?.id == it.id
-                    }
-                } ?: false
                 val contractTermsVisible = formSections.any { it.id == contractTermsSectionId }
 
                 Button(
@@ -1284,17 +1306,22 @@ fun ContractRoleSelectionScreen(
                         val currentPerson = personTypesForRole(role.id).firstOrNull { it.id == currentPersonTypeId }
                         val missingRequired = currentPerson?.fields.orEmpty()
                             .filter { it.required && fieldValues[it.key].orEmpty().trim().isEmpty() }
-                        val missingTerms = if (contractTermsVisible && isCurrentRoleMain) {
+                        val missingTerms = if (contractTermsVisible) {
                             contractTermsFieldList.filter { it.required && contractTermsValues[it.key].orEmpty().trim().isEmpty() }
                         } else emptyList()
                         val missingAll = (missingRequired + missingTerms).distinctBy { it.key }
                         if (missingAll.isNotEmpty()) {
-                            validationError = "Заповніть обов'язкові поля: " + missingAll.joinToString(", ") { it.label }
+                            // Обмежуємо кількість полів до 3, щоб не перевантажувати UI
+                            val displayFields = missingAll.take(3)
+                            val suffix = if (missingAll.size > 3) " та ще ${missingAll.size - 3}..." else ""
+                            validationError = "Заповніть обов'язкові поля: " + displayFields.joinToString(", ") { it.label } + suffix
+                            errorTimestamp = System.currentTimeMillis()
                             return@Button
                         }
                         validationError = null
+                        onClearError() // Очищаємо помилку від бекенду перед новим збереженням
                         val mergedFields = fieldValues.toMutableMap().apply {
-                            if (contractTermsVisible && isCurrentRoleMain) {
+                            if (contractTermsVisible) {
                                 putAll(contractTermsValues)
                             }
                         }
@@ -1302,16 +1329,17 @@ fun ContractRoleSelectionScreen(
                             val saved = runCatching {
                                 onRemoteSave(role.id, currentPersonTypeId, mergedFields)
                             }.onFailure { error ->
-                                // validationError = error.message ?: "Не вдалося зберегти дані. Спробуйте ще раз."
+                                validationError = error.message ?: context.getString(R.string.contracts_error_session_create)
+                                errorTimestamp = System.currentTimeMillis()
                             }.getOrNull()
-                            // if (saved == null) {
-                            //    validationError = validationError ?: "Не вдалося зберегти дані. Спробуйте ще раз."
-                            //    return@launch
-                            // }
-                            if (saved != null) {
-                                lastSavedContract = saved
+                            if (saved == null) {
+                                // Якщо saved == null, то або виникла помилка (буде в validationError),
+                                // або є помилки валідації від бекенду (будуть в backendError через _error)
+                                // Валідні поля збережено на сервері
+                                return@launch
                             }
-                            saveSuccessMessage = "Дані успішно збережено"
+                            lastSavedContract = saved
+                            saveSuccessMessage = context.getString(R.string.contracts_save_success)
                             showSuccessDialog = true
                         }
                     },
@@ -1327,7 +1355,7 @@ fun ContractRoleSelectionScreen(
                     )
                 ) {
                     Text(
-                        text = "Зберегти дані",
+                        text = stringResource(R.string.contracts_save_button),
                         style = DiiaTextStyle.t1BigText.copy(fontWeight = FontWeight.SemiBold),
                         color = White
                     )
@@ -1372,29 +1400,53 @@ private fun SaveSuccessBanner(message: String) {
 }
 
 @Composable
-private fun ErrorBanner(message: String) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(Color(0xFFFFF7E8))
-            .padding(horizontal = 12.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.Top,
-        horizontalArrangement = Arrangement.spacedBy(12.dp)
+private fun ErrorBanner(
+    message: String,
+    showTimestamp: Long = System.currentTimeMillis(),
+    onDismiss: (() -> Unit)? = null
+) {
+    var visible by remember(showTimestamp) { mutableStateOf(true) }
+    
+    // Автоматичне зникнення через 5 секунд
+    // Використовуємо showTimestamp як ключ, щоб LaunchedEffect перезапускався
+    // навіть якщо message той самий (повторна помилка)
+    LaunchedEffect(showTimestamp) {
+        visible = true
+        delay(5000)
+        visible = false
+        onDismiss?.invoke()
+    }
+    
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(animationSpec = tween(200)) + expandVertically(animationSpec = tween(250)),
+        exit = fadeOut(animationSpec = tween(150)) + shrinkVertically(animationSpec = tween(200))
     ) {
-        Icon(
-            imageVector = Icons.Filled.Warning,
-            contentDescription = null,
-            tint = Color(0xFFE08E00),
-            modifier = Modifier.padding(top = 2.dp)
-        )
-        Text(
-            text = message,
-            style = DiiaTextStyle.t3TextBody.copy(fontWeight = FontWeight.Medium),
-            color = Black,
-            modifier = Modifier.weight(1f),
-            textAlign = TextAlign.Start
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color(0xFFFFF7E8))
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Warning,
+                contentDescription = null,
+                tint = Color(0xFFE08E00),
+                modifier = Modifier.padding(top = 2.dp)
+            )
+            Text(
+                text = message,
+                style = DiiaTextStyle.t3TextBody.copy(fontWeight = FontWeight.Medium),
+                color = Black,
+                modifier = Modifier.weight(1f),
+                textAlign = TextAlign.Start,
+                maxLines = 4,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }
 
@@ -1448,142 +1500,6 @@ private fun SaveSuccessDialog(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ContractDataInputScreen(
-    role: String,
-    onBackClick: () -> Unit,
-    onNextClick: () -> Unit
-) {
-    val personTypes = leasePersonTypes()
-    val contractFields = contractTermsFields()
-
-    var selectedPersonTypeId by remember { mutableStateOf(personTypes.first().id) }
-    val personFieldValues = remember { mutableStateMapOf<String, String>() }
-    val contractFieldValues = remember { mutableStateMapOf<String, String>() }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Color(0xFFF3F4F6))
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-        ) {
-            TopBar(title = "Дані сторони ($role)", onBackClick = onBackClick)
-
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
-            ) {
-                Surface(
-                    color = White,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                    shadowElevation = 8.dp
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            text = "Тип сторони",
-                            style = DiiaTextStyle.t2TextDescription.copy(fontWeight = FontWeight.SemiBold),
-                            color = Black
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            personTypes.forEach { type ->
-                                val selected = selectedPersonTypeId == type.id
-                                Box(modifier = Modifier.weight(1f)) {
-                                    FilterChip(
-                                        selected = selected,
-                                        onClick = { selectedPersonTypeId = type.id },
-                                        label = {
-                                            Text(
-                                                text = type.label,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis
-                                            )
-                                        },
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            containerColor = White,
-                                            selectedContainerColor = BlackAlpha10,
-                                            labelColor = Black,
-                                            selectedLabelColor = Black
-                                        ),
-                                        shape = RoundedCornerShape(10.dp),
-                                        border = BorderStroke(1.dp, BlackAlpha10),
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .defaultMinSize(minHeight = 44.dp)
-                                    )
-                                }
-                            }
-                        }
-                        PersonFields(
-                            fields = personTypes.first { it.id == selectedPersonTypeId }.fields,
-                            values = personFieldValues
-                        )
-                    }
-                }
-
-                Surface(
-                    color = White,
-                    shape = RoundedCornerShape(16.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                    shadowElevation = 8.dp
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            text = "Дані договору",
-                            style = DiiaTextStyle.t2TextDescription.copy(fontWeight = FontWeight.SemiBold),
-                            color = Black
-                        )
-                        PersonFields(
-                            fields = contractFields,
-                            values = contractFieldValues
-                        )
-                    }
-                }
-            }
-
-            // Next Button
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(White)
-                    .padding(16.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Black, RoundedCornerShape(16.dp))
-                        .clip(RoundedCornerShape(16.dp))
-                        .clickable(onClick = onNextClick)
-                        .padding(vertical = 16.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "Далі",
-                        style = DiiaTextStyle.t1BigText.copy(fontWeight = FontWeight.SemiBold),
-                        color = White
-                    )
-                }
-            }
-        }
-    }
-}
-
 @Composable
 private fun IdentityReminderNote() {
     Surface(
@@ -1621,7 +1537,20 @@ data class ContractChatMessage(
     val id: Long,
     val isUser: Boolean,
     val text: String,
-    val isTyping: Boolean = false
+    val isTyping: Boolean = false,
+    val actions: List<ChatAction> = emptyList()
+)
+
+/**
+ * Дія-кнопка в повідомленні чату.
+ * @param type тип дії: "navigate_filling_mode", "confirm_category", etc.
+ * @param label текст кнопки
+ * @param payload додаткові дані (category_id, template_id, etc.)
+ */
+data class ChatAction(
+    val type: String,
+    val label: String,
+    val payload: Map<String, String> = emptyMap()
 )
 
 data class ContractCategory(
@@ -1633,7 +1562,8 @@ private data class RoleForm(
     val id: String,
     val title: String,
     val description: String,
-    val isOccupied: Boolean
+    val isOccupied: Boolean,
+    val isOwnedByMe: Boolean = false
 )
 
 private data class PersonType(
@@ -1669,6 +1599,46 @@ private fun String?.asKeyboardType(): KeyboardType = when (this?.lowercase()) {
     "phone" -> KeyboardType.Phone
     "email" -> KeyboardType.Email
     else -> KeyboardType.Text
+}
+
+@Composable
+private fun PersonTypeSelector(
+    personTypes: List<PersonType>,
+    selectedId: String,
+    onSelect: (String) -> Unit,
+    enabled: Boolean = true
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(
+            text = "Тип особи",
+            style = DiiaTextStyle.t3TextBody,
+            color = BlackAlpha54
+        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            personTypes.forEach { personType ->
+                val isSelected = personType.id == selectedId
+                Surface(
+                    onClick = { if (enabled) onSelect(personType.id) },
+                    enabled = enabled,
+                    shape = RoundedCornerShape(20.dp),
+                    color = if (isSelected) Black else White,
+                    border = BorderStroke(1.dp, if (isSelected) Black else BlackAlpha20)
+                ) {
+                    Text(
+                        text = personType.label,
+                        style = DiiaTextStyle.t3TextBody.copy(fontWeight = FontWeight.Medium),
+                        color = if (isSelected) White else Black,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
@@ -1803,12 +1773,12 @@ private fun ContractTermsCard(
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             Text(
-                text = "Умови договору",
+                text = stringResource(R.string.contracts_terms_title),
                 style = DiiaTextStyle.t2TextDescription.copy(fontWeight = FontWeight.SemiBold),
                 color = Black
             )
             Text(
-                text = "Заповнює головна сторона. Дані додаються до договору для обох сторін.",
+                text = stringResource(R.string.contracts_terms_subtitle),
                 style = DiiaTextStyle.t3TextBody,
                 color = BlackAlpha54
             )
@@ -1877,7 +1847,10 @@ fun GradientHintCard(
 }
 
 @Composable
-private fun ContractChatMessageBubble(message: ContractChatMessage) {
+private fun ContractChatMessageBubble(
+    message: ContractChatMessage,
+    onActionClick: (ChatAction) -> Unit = {}
+) {
     val isTyping = message.isTyping
     val shape = RoundedCornerShape(
         topStart = 20.dp,
@@ -1916,7 +1889,7 @@ private fun ContractChatMessageBubble(message: ContractChatMessage) {
 
             Box(
                 modifier = Modifier
-                    .widthIn(min = 120.dp, max = 220.dp)
+                    .widthIn(min = 120.dp, max = 280.dp)
                     .shadow(if (message.isUser) 10.dp else 8.dp, shape = shape, clip = false)
                     .background(brush = bubbleBrush, shape = shape)
                     .padding(horizontal = 14.dp, vertical = 10.dp)
@@ -1930,14 +1903,48 @@ private fun ContractChatMessageBubble(message: ContractChatMessage) {
                 if (isTyping) {
                     TypingIndicatorDots()
                 } else {
-                    Text(
-                        text = message.text,
-                        style = DiiaTextStyle.t3TextBody,
-                        color = textColor
-                    )
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(
+                            text = message.text,
+                            style = DiiaTextStyle.t3TextBody,
+                            color = textColor
+                        )
+                        // Рендеримо action-кнопки якщо є
+                        if (message.actions.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            message.actions.forEach { action ->
+                                ChatActionButton(
+                                    action = action,
+                                    onClick = { onActionClick(action) }
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ChatActionButton(
+    action: ChatAction,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        color = Black,
+        contentColor = White,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = action.label,
+            style = DiiaTextStyle.t3TextBody.copy(fontWeight = FontWeight.SemiBold),
+            color = White,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            textAlign = TextAlign.Center
+        )
     }
 }
 
@@ -1996,8 +2003,6 @@ private fun RoleCardWithForm(
     onToggle: () -> Unit
 ) {
     val borderColor = if (isSelected) BlackAlpha20 else BlackAlpha10
-    val statusText = if (role.isOccupied) "Зайнята" else "Вільна"
-    val statusColor = if (role.isOccupied) Color(0xFFE74C3C) else Color(0xFF1E9E55)
     Surface(
         shape = RoundedCornerShape(14.dp),
         color = White,
@@ -2029,28 +2034,14 @@ private fun RoleCardWithForm(
                         color = BlackAlpha54
                     )
                 }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(statusColor.copy(alpha = 0.12f))
-                            .padding(horizontal = 10.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = statusText,
-                            style = DiiaTextStyle.t3TextBody.copy(fontWeight = FontWeight.Medium),
-                            color = statusColor
-                        )
-                    }
-                    if (!role.isOccupied) {
-                        val arrowIcon = if (isExpanded) UiBaseR.drawable.ic_role_arrow_up else UiBaseR.drawable.ic_role_arrow_down
-                        Icon(
-                            painter = painterResource(id = arrowIcon),
-                            contentDescription = null,
-                            tint = Color(0xFF123264),
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
+                if (!role.isOccupied) {
+                    val arrowIcon = if (isExpanded) UiBaseR.drawable.ic_role_arrow_up else UiBaseR.drawable.ic_role_arrow_down
+                    Icon(
+                        painter = painterResource(id = arrowIcon),
+                        contentDescription = null,
+                        tint = Color(0xFF123264),
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
 
@@ -2069,98 +2060,29 @@ private fun RoleCardWithForm(
                     )
                 ) + fadeOut(animationSpec = tween(160))
             ) {
-                val resolvedFields = personTypes.firstOrNull { it.id == selectedPersonTypeId }?.fields
-                    ?: personTypes.firstOrNull()?.fields
-                    ?: emptyList()
-                PersonFields(
-                    fields = resolvedFields,
-                    values = values,
-                    enabled = !role.isOccupied
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // Селектор типу особи (якщо є більше 1 типу)
+                    if (personTypes.size > 1) {
+                        PersonTypeSelector(
+                            personTypes = personTypes,
+                            selectedId = selectedPersonTypeId,
+                            onSelect = onSelectPersonType,
+                            enabled = !role.isOccupied
+                        )
+                    }
+                    
+                    val resolvedFields = personTypes.firstOrNull { it.id == selectedPersonTypeId }?.fields
+                        ?: personTypes.firstOrNull()?.fields
+                        ?: emptyList()
+                    PersonFields(
+                        fields = resolvedFields,
+                        values = values,
+                        enabled = !role.isOccupied
+                    )
+                }
             }
         }
     }
-}
-
-private fun leasePersonTypes(): List<PersonType> = listOf(
-    PersonType(
-        id = "individual",
-        label = "Фізична особа",
-        fields = listOf(
-            PersonField("name", "ПІБ", true, KeyboardType.Text),
-            PersonField("address", "Адреса проживання/реєстрації", true, KeyboardType.Text),
-            PersonField("id_doc", "Паспорт (серія/номер)", false, KeyboardType.Text),
-            PersonField("id_code", "РНОКПП", false, KeyboardType.Text),
-            PersonField("iban", "IBAN рахунку (за наявності)", false, KeyboardType.Text),
-            PersonField("phone", "Телефон", false, KeyboardType.Phone),
-            PersonField("email", "Email", false, KeyboardType.Email)
-        )
-    ),
-    PersonType(
-        id = "fop",
-        label = "ФОП",
-        fields = listOf(
-            PersonField("name", "ПІБ ФОП", true, KeyboardType.Text),
-            PersonField("address", "Адреса реєстрації ФОП", true, KeyboardType.Text),
-            PersonField("id_code", "РНОКПП", true, KeyboardType.Text),
-            PersonField("id_doc", "Паспорт (серія/номер)", false, KeyboardType.Text),
-            PersonField("iban", "IBAN рахунку", false, KeyboardType.Text),
-            PersonField("phone", "Телефон", false, KeyboardType.Phone),
-            PersonField("email", "Email", false, KeyboardType.Email)
-        )
-    ),
-    PersonType(
-        id = "company",
-        label = "Юр. особа",
-        fields = listOf(
-            PersonField("name", "Повна назва юр. особи", true, KeyboardType.Text),
-            PersonField("address", "Юридична адреса", true, KeyboardType.Text),
-            PersonField("id_code", "Код ЄДРПОУ", true, KeyboardType.Text),
-            PersonField("representative", "ПІБ директора / представника", false, KeyboardType.Text),
-            PersonField("id_doc", "Документ представника", false, KeyboardType.Text),
-            PersonField("iban", "IBAN рахунку", false, KeyboardType.Text),
-            PersonField("phone", "Телефон", false, KeyboardType.Phone),
-            PersonField("email", "Email", false, KeyboardType.Email)
-        )
-    )
-)
-
-private fun contractTermsFields(): List<PersonField> = leaseContractFields()
-
-private fun leaseContractFields(): List<PersonField> = listOf(
-    PersonField("object_address", "Адреса житла (об'єкт оренди)", true, KeyboardType.Text),
-    PersonField("object_description", "Опис об'єкта", false, KeyboardType.Text),
-    PersonField("area_sqm", "Площа (м²)", false, KeyboardType.Number),
-    PersonField("rent_price_month", "Сума оренди за місяць (грн/міс)", true, KeyboardType.Number),
-    PersonField("deposit_amount", "Сума завдатку (грн)", false, KeyboardType.Number),
-    PersonField("payment_due_day", "День місяця для оплати", false, KeyboardType.Number),
-    PersonField("start_date", "Дата початку оренди", true, KeyboardType.Text),
-    PersonField("end_date", "Дата закінчення оренди", false, KeyboardType.Text)
-)
-
-fun ContractDraft.toContractUiModel(): ContractUiModel {
-    val formatter = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
-    val formattedDate = formatter.format(Date())
-    val name = fields["name"]?.takeIf { it.isNotBlank() }
-    val subtitleParts = listOfNotNull(personTypeLabel.takeIf { it.isNotBlank() }, name)
-    val subtitle = subtitleParts.joinToString(" • ").ifBlank { "Дані успішно збережено" }
-
-    return ContractUiModel(
-        id = "${contractType}_${roleId}_${System.currentTimeMillis()}",
-        title = "Чернетка договору",
-        subtitle = subtitle,
-        status = ContractStatus.DRAFT,
-        lastUpdated = formattedDate,
-        iconRes = UiBaseR.drawable.ic_doc_cert,
-        isFilled = fields.isNotEmpty(),
-        isSigned = false,
-        history = listOf(
-            HistoryUiModel(
-                date = formattedDate,
-                description = "Дані сторони збережено: $roleTitle"
-            )
-        )
-    )
 }
 
 data class ContractTemplate(
@@ -2174,7 +2096,8 @@ fun ContractTemplatesScreen(
     categoryId: String,
     templates: List<ContractTemplate>,
     onBackClick: () -> Unit,
-    onTemplateSelected: (String) -> Unit
+    onTemplateSelected: (String) -> Unit,
+    isLoading: Boolean = false
 ) {
     Box(
         modifier = Modifier
@@ -2193,7 +2116,13 @@ fun ContractTemplatesScreen(
                 .fillMaxSize()
                 .statusBarsPadding()
         ) {
-            TopBar(title = "Шаблони договорів", onBackClick = onBackClick)
+            TopBar(title = stringResource(R.string.contracts_templates_title), onBackClick = onBackClick)
+            Text(
+                text = "Оберіть шаблон договору",
+                style = DiiaTextStyle.h2MediumHeading,
+                color = Black,
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            )
 
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
@@ -2226,7 +2155,7 @@ fun ContractTemplatesScreen(
                 if (templates.isEmpty()) {
                     item {
                         Text(
-                            text = "Немає шаблонів для цієї категорії",
+                            text = stringResource(R.string.contracts_templates_empty),
                             style = DiiaTextStyle.t3TextBody,
                             color = BlackAlpha54,
                             modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)
@@ -2247,13 +2176,14 @@ private fun templatesForCategory(categoryId: String): List<ContractTemplate> {
 @Composable
 private fun QuickPromptPicker(
     quickPrompts: List<Pair<String, String>>,
-    onPick: (String) -> Unit
+    onPick: (String) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val quickPromptShape = RoundedCornerShape(18.dp)
     val quickPromptBorder = Color(0xFF7E5CFF)
 
     Column(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .clip(quickPromptShape)
             .background(Color.White)
@@ -2361,27 +2291,238 @@ private fun QuickPromptChip(
     }
 }
 
+// ===== КОМПОНЕНТИ У СТИЛІ ДІЇ =====
+
+/**
+ * Навігаційна панель у стилі Дії (NavigationPanelMlc)
+ * Відступи: start=24dp, top=32dp, end=24dp, bottom=16dp
+ */
 @Composable
-fun TopBar(title: String, onBackClick: () -> Unit) {
+fun DiiaNavigationPanel(
+    title: String,
+    onBackClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    showContextMenu: Boolean = false,
+    onContextMenuClick: () -> Unit = {},
+    trailingContent: (@Composable RowScope.() -> Unit)? = null
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(start = 24.dp, top = 32.dp, end = 24.dp, bottom = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onBackClick) {
+        // Кнопка назад - 28dp як у NavigationPanelMlc
+        Box(
+            modifier = Modifier
+                .size(28.dp)
+                .clip(CircleShape)
+                .clickable(onClick = onBackClick),
+            contentAlignment = Alignment.Center
+        ) {
             Icon(
                 painter = painterResource(id = UiBaseR.drawable.ic_arrow_back),
-                contentDescription = "Back",
-                tint = Black
+                contentDescription = "Назад",
+                tint = Black,
+                modifier = Modifier.size(24.dp)
             )
         }
+        
+        // Заголовок - h4ExtraSmallHeading
         Text(
             text = title,
-            style = DiiaTextStyle.h3SmallHeading.copy(fontWeight = FontWeight.Medium),
-            modifier = Modifier.padding(start = 8.dp)
+            style = DiiaTextStyle.h4ExtraSmallHeading,
+            color = Black,
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 16.dp),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
+        
+        // Кастомний трейлінг або дефолтне контекстне меню
+        if (trailingContent != null) {
+            trailingContent()
+        } else if (showContextMenu) {
+            Box(
+                modifier = Modifier
+                    .size(28.dp)
+                    .clip(CircleShape)
+                    .clickable(onClick = onContextMenuClick),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = UiBaseR.drawable.ic_menu),
+                    contentDescription = "Меню",
+                    tint = Black,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
     }
+}
+
+/**
+ * Поле пошуку у стилі Дії (SearchInputMlc)
+ * Білий фон, заокруглені кути 16dp, іконка пошуку зліва
+ */
+@Composable
+fun DiiaSearchInput(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    val shape = RoundedCornerShape(16.dp)
+    
+    Surface(
+        modifier = modifier.fillMaxWidth(),
+        shape = shape,
+        color = White,
+        shadowElevation = 0.dp
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .defaultMinSize(minHeight = 48.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Іконка пошуку
+            Icon(
+                painter = painterResource(id = UiBaseR.drawable.ic_search_black),
+                contentDescription = null,
+                tint = BlackAlpha30,
+                modifier = Modifier.size(20.dp)
+            )
+            
+            Spacer(modifier = Modifier.width(12.dp))
+            
+            // Текстове поле
+            Box(modifier = Modifier.weight(1f)) {
+                if (value.isEmpty()) {
+                    Text(
+                        text = placeholder,
+                        style = DiiaTextStyle.t2TextDescription,
+                        color = BlackAlpha30
+                    )
+                }
+                androidx.compose.foundation.text.BasicTextField(
+                    value = value,
+                    onValueChange = onValueChange,
+                    enabled = enabled,
+                    textStyle = DiiaTextStyle.t2TextDescription.copy(color = Black),
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+            
+            // Кнопка очищення
+            AnimatedVisibility(
+                visible = value.isNotEmpty(),
+                enter = fadeIn(),
+                exit = fadeOut()
+            ) {
+                IconButton(
+                    onClick = { onValueChange("") },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        painter = painterResource(id = UiBaseR.drawable.ic_input_clear),
+                        contentDescription = "Очистити",
+                        tint = BlackAlpha54
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Промо-банер AI у стилі Дії
+ * Світло-блакитний фон з бордером, іконка зліва, заокруглені кути 16dp
+ */
+@Composable
+fun DiiaAiPromoBanner(
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val shape = RoundedCornerShape(16.dp)
+    val backgroundColor = Color(0xFFE8F4FD) // Світло-блакитний
+    val borderColor = Color(0xFFB8DCF5) // Блакитний бордер
+    val iconBackground = Color(0xFF4BB3FE) // Синій фон іконки
+    
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(shape)
+            .clickable(onClick = onClick),
+        shape = shape,
+        color = backgroundColor,
+        border = BorderStroke(1.dp, borderColor)
+    ) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            // Іконка AI
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(iconBackground, RoundedCornerShape(8.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(id = UiBaseR.drawable.ic_doc_info),
+                    contentDescription = null,
+                    tint = White,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(12.dp))
+            
+            // Текст
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = DiiaTextStyle.t1BigText,
+                    color = Black
+                )
+                Text(
+                    text = subtitle,
+                    style = DiiaTextStyle.t3TextBody,
+                    color = BlackAlpha54
+                )
+            }
+            
+            // Стрілка вправо
+            Icon(
+                painter = painterResource(id = UiBaseR.drawable.ic_arrow_right),
+                contentDescription = null,
+                tint = Color.Unspecified,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+    }
+}
+
+/**
+ * Старий TopBar для зворотної сумісності
+ * @deprecated Використовуйте DiiaNavigationPanel
+ */
+@Composable
+fun TopBar(title: String, onBackClick: () -> Unit) {
+    DiiaNavigationPanel(
+        title = title,
+        onBackClick = onBackClick
+    )
 }
 
 @Composable
@@ -2407,3 +2548,311 @@ fun SelectionCard(title: String, description: String, onClick: () -> Unit) {
         )
     }
 }
+
+/**
+ * Чекбокс у стилі Дії
+ */
+@Composable
+fun DiiaCheckbox(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onCheckedChange(!checked) }
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Індикатор чекбоксу
+        Box(
+            modifier = Modifier
+                .size(24.dp)
+                .clip(RoundedCornerShape(6.dp))
+                .background(if (checked) Black else White)
+                .border(
+                    width = 1.5.dp,
+                    color = if (checked) Black else BlackAlpha20,
+                    shape = RoundedCornerShape(6.dp)
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            if (checked) {
+                Icon(
+                    imageVector = Icons.Filled.Check,
+                    contentDescription = null,
+                    tint = White,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+        
+        // Текст
+        Text(
+            text = label,
+            style = DiiaTextStyle.t2TextDescription,
+            color = Black
+        )
+    }
+}
+
+/**
+ * Основна кнопка у стилі Дії (BtnPrimaryDefaultAtm)
+ */
+@Composable
+fun DiiaPrimaryButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true
+) {
+    val backgroundColor = if (enabled) Black else BlackAlpha10
+    val textColor = if (enabled) White else BlackAlpha54
+    
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .defaultMinSize(minHeight = 56.dp)
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(enabled = enabled, onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = backgroundColor
+    ) {
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                style = DiiaTextStyle.t1BigText.copy(fontWeight = FontWeight.SemiBold),
+                color = textColor,
+                modifier = Modifier.padding(vertical = 16.dp)
+            )
+        }
+    }
+}
+
+/**
+ * Елемент списку у стилі Дії (іконка + текст + стрілка)
+ */
+@Composable
+fun DiiaListItem(
+    title: String,
+    icon: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Іконка зліва
+        Surface(
+            shape = RoundedCornerShape(10.dp),
+            color = Color(0xFFF0F3F7),
+            modifier = Modifier.size(40.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(
+                    painter = painterResource(id = icon),
+                    contentDescription = null,
+                    tint = Black,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+        
+        // Текст
+        Column(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.spacedBy(2.dp)
+        ) {
+            Text(
+                text = title,
+                style = DiiaTextStyle.t1BigText,
+                color = Black,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            if (subtitle != null) {
+                Text(
+                    text = subtitle,
+                    style = DiiaTextStyle.t3TextBody,
+                    color = BlackAlpha54,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+        
+        // Стрілка справа
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = BlackAlpha54,
+            modifier = Modifier.size(24.dp)
+        )
+    }
+}
+
+/**
+ * Картка меню у стилі Дії (біла плашка з текстом і стрілкою)
+ */
+@Composable
+fun DiiaMenuCard(
+    title: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(White)
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = DiiaTextStyle.t3TextBody.copy(fontWeight = FontWeight.Medium),
+            color = Black
+        )
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = Black
+        )
+    }
+}
+
+/**
+ * Картка опції у стилі Дії (для вибору режиму заповнення)
+ */
+@Composable
+fun DiiaOptionCard(
+    title: String,
+    subtitle: String,
+    cta: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val borderColor = if (isSelected) Black else BlackAlpha10
+    
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = Alabaster,
+        border = BorderStroke(if (isSelected) 2.dp else 1.dp, borderColor)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = title,
+                style = DiiaTextStyle.t1BigText.copy(fontWeight = FontWeight.SemiBold),
+                color = Black
+            )
+            Text(
+                text = subtitle,
+                style = DiiaTextStyle.t2TextDescription,
+                color = BlackAlpha54
+            )
+            Text(
+                text = cta,
+                style = DiiaTextStyle.t3TextBody.copy(fontWeight = FontWeight.Medium),
+                color = Black
+            )
+        }
+    }
+}
+
+/**
+ * Картка ролі у стилі Дії (для вибору сторони договору)
+ */
+@Composable
+fun DiiaRoleCard(
+    title: String,
+    description: String,
+    isOccupied: Boolean,
+    isOwnedByMe: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val statusText = when {
+        isOwnedByMe -> "Ваша роль"
+        isOccupied -> "Зайнята"
+        else -> "Вільна"
+    }
+    val statusColor = when {
+        isOwnedByMe -> AzureRadiance
+        isOccupied -> Color(0xFFE74C3C)
+        else -> Color(0xFF1E9E55)
+    }
+    val isClickable = !isOccupied || isOwnedByMe
+    val borderColor = if (isClickable) BlackAlpha10 else BlackAlpha10
+    
+    Surface(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .clickable(enabled = isClickable, onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        color = Alabaster,
+        border = BorderStroke(1.dp, borderColor)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = title,
+                    style = DiiaTextStyle.t1BigText.copy(fontWeight = FontWeight.SemiBold),
+                    color = if (isClickable) Black else BlackAlpha54
+                )
+                // Статус бейдж
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = statusColor.copy(alpha = 0.12f)
+                ) {
+                    Text(
+                        text = statusText,
+                        style = DiiaTextStyle.t3TextBody.copy(fontWeight = FontWeight.Medium),
+                        color = statusColor,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
+            Text(
+                text = description,
+                style = DiiaTextStyle.t2TextDescription,
+                color = BlackAlpha54
+            )
+        }
+    }
+}
+

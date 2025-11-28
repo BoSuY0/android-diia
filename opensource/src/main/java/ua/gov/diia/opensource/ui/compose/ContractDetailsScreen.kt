@@ -1,5 +1,7 @@
 package ua.gov.diia.opensource.ui.compose
 
+import android.widget.Toast
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -12,6 +14,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -21,11 +25,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import ua.gov.diia.opensource.R
 import ua.gov.diia.ui_base.components.theme.Alabaster
 import ua.gov.diia.ui_base.components.theme.AzureRadiance
@@ -39,6 +47,7 @@ import ua.gov.diia.ui_base.components.theme.WhiteAlpha20
 import ua.gov.diia.ui_base.components.theme.WhiteAlpha70
 import ua.gov.diia.ui_base.R as UiBaseR
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ContractDetailsScreen(
     contract: ContractUiModel,
@@ -88,38 +97,49 @@ fun ContractDetailsScreen(
                 ) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.spacedBy(16.dp),
-                        contentPadding = PaddingValues(
-                            start = 20.dp,
-                            end = 20.dp,
-                            top = 20.dp,
-                            bottom = bottomPadding + 16.dp
-                        )
-                    ) {
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    contentPadding = PaddingValues(
+                        start = 20.dp,
+                        end = 20.dp,
+                        top = 20.dp,
+                        bottom = bottomPadding + 16.dp
+                    )
+                ) {
+                    if (contract.history.isNotEmpty()) {
                         item {
-                            ContractHeroCard(contract = contract, statusStyle = statusStyle)
+                            Text(
+                                text = stringResource(id = R.string.contracts_details_history_title),
+                                style = DiiaTextStyle.h3SmallHeading,
+                                color = Black
+                            )
                         }
 
-                        if (contract.history.isNotEmpty()) {
-                            item {
-                                Text(
-                                    text = stringResource(id = R.string.contracts_details_history_title),
-                                    style = DiiaTextStyle.h3SmallHeading,
-                                    color = Black
-                                )
-                            }
-
-                            items(contract.history) { history ->
-                                HistoryItem(
-                                    history = history,
-                                    isLast = history == contract.history.last()
-                                )
+                        item {
+                            Surface(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                tonalElevation = 0.dp,
+                                shadowElevation = 6.dp,
+                                color = White
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    contract.history.forEachIndexed { index, history ->
+                                        HistoryItem(
+                                            history = history,
+                                            isLast = index == contract.history.lastIndex
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
                 }
             }
         }
+    }
     }
 }
 
@@ -141,7 +161,7 @@ private fun DetailsHeader(
                 .fillMaxWidth()
                 .background(
                     brush = Brush.verticalGradient(
-                        colors = listOf(Color(0xFF0E0E0E), Color(0xFF1B1F2B))
+                        colors = listOf(Color(0xFFF5F7FA), Color(0xFFFFFFFF))
                     )
                 )
                 .statusBarsPadding()
@@ -155,33 +175,33 @@ private fun DetailsHeader(
                     onClick = onBackClick,
                     modifier = Modifier
                         .size(38.dp)
-                        .background(WhiteAlpha20, CircleShape)
+                        .background(BlackAlpha10, CircleShape)
                 ) {
                     Icon(
                         painter = painterResource(id = UiBaseR.drawable.ic_arrow_back),
                         contentDescription = null,
-                        tint = White
+                        tint = Black
                     )
                 }
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = stringResource(id = R.string.contracts_title),
                     style = DiiaTextStyle.h3SmallHeading.copy(fontWeight = FontWeight.SemiBold),
-                    color = White
+                    color = Black
                 )
             }
 
             Text(
                 text = contract.title,
                 style = DiiaTextStyle.h1Heading.copy(fontWeight = FontWeight.Bold),
-                color = White,
+                color = Black,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = contract.subtitle,
                 style = DiiaTextStyle.t1BigText,
-                color = WhiteAlpha70,
+                color = BlackAlpha54,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
@@ -190,11 +210,11 @@ private fun DetailsHeader(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                StatusBadge(style = statusStyle, dark = true)
+                StatusBadge(style = statusStyle, dark = false)
                 MetaBadge(
                     text = stringResource(id = R.string.contracts_updated_at, contract.lastUpdated),
                     iconRes = UiBaseR.drawable.ic_time_black_square,
-                    dark = true
+                    dark = false
                 )
             }
             Spacer(modifier = Modifier.height(4.dp))
@@ -255,9 +275,10 @@ private fun ContractHeroCard(
                 }
             }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 StatusBadge(style = statusStyle)
                 MetaBadge(
@@ -265,8 +286,122 @@ private fun ContractHeroCard(
                     iconRes = UiBaseR.drawable.ic_time_black_square
                 )
                 when {
-                    contract.isSigned -> MetaBadge(text = stringResource(id = R.string.contracts_meta_signed))
+                    contract.isSigned -> MetaBadge(
+                        text = stringResource(id = R.string.contracts_meta_signed),
+                        backgroundColor = Color(0xFFFFF3CD), // Світло-жовтий фон
+                        textColor = Color(0xFF856404) // Темно-жовтий текст
+                    )
                     !contract.isFilled -> MetaBadge(text = stringResource(id = R.string.contracts_meta_draft))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun ShareContractLinkDialog(
+    link: String,
+    onDismiss: () -> Unit
+) {
+    val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
+
+    val copyLinkAndClose: () -> Unit = {
+        clipboardManager.setText(AnnotatedString(link))
+        Toast.makeText(
+            context,
+            context.getString(R.string.contracts_share_copied),
+            Toast.LENGTH_SHORT
+        ).show()
+        // Закриваємо діалог одразу — Toast показується асинхронно
+        onDismiss()
+    }
+    
+    val copyLinkOnly: () -> Unit = {
+        clipboardManager.setText(AnnotatedString(link))
+        Toast.makeText(
+            context,
+            context.getString(R.string.contracts_share_copied),
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Surface(
+            shape = RoundedCornerShape(22.dp),
+            color = White,
+            tonalElevation = 0.dp,
+            shadowElevation = 12.dp,
+            border = BorderStroke(1.dp, BlackAlpha10),
+            modifier = Modifier.widthIn(max = 400.dp) // Обмеження ширини для планшетів
+        ) {
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = stringResource(id = R.string.contracts_share_title),
+                    style = DiiaTextStyle.h3SmallHeading.copy(fontWeight = FontWeight.SemiBold),
+                    color = Black
+                )
+                Text(
+                    text = stringResource(id = R.string.contracts_share_description),
+                    style = DiiaTextStyle.t3TextBody,
+                    color = BlackAlpha80
+                )
+                OutlinedTextField(
+                    value = link,
+                    onValueChange = {},
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(text = stringResource(id = R.string.contracts_share_link_label)) },
+                    singleLine = true,
+                    readOnly = true,
+                    trailingIcon = {
+                        IconButton(onClick = copyLinkOnly) {
+                            Icon(
+                                painter = painterResource(id = UiBaseR.drawable.ic_copy),
+                                contentDescription = stringResource(id = UiBaseR.string.copy_to_clipboard),
+                                tint = Black
+                            )
+                        }
+                    },
+                    shape = RoundedCornerShape(14.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Black,
+                        unfocusedBorderColor = BlackAlpha10,
+                        focusedLabelColor = Black,
+                        unfocusedLabelColor = BlackAlpha54,
+                        disabledBorderColor = BlackAlpha10
+                    )
+                )
+                Button(
+                    onClick = copyLinkAndClose,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Black,
+                        contentColor = White
+                    ),
+                    contentPadding = PaddingValues(vertical = 12.dp)
+                ) {
+                    Text(
+                        text = stringResource(id = UiBaseR.string.copy_to_clipboard),
+                        style = DiiaTextStyle.t1BigText.copy(fontWeight = FontWeight.SemiBold)
+                    )
+                }
+                OutlinedButton(
+                    onClick = onDismiss,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(14.dp),
+                    border = BorderStroke(1.5.dp, Black),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Black),
+                    contentPadding = PaddingValues(vertical = 12.dp)
+                ) {
+                    Text(
+                        text = stringResource(id = UiBaseR.string.close),
+                        style = DiiaTextStyle.t1BigText.copy(fontWeight = FontWeight.SemiBold)
+                    )
                 }
             }
         }
@@ -308,10 +443,12 @@ private fun StatusBadge(style: ContractStatusStyle, dark: Boolean) {
 private fun MetaBadge(
     text: String,
     iconRes: Int? = null,
-    dark: Boolean = false
+    dark: Boolean = false,
+    backgroundColor: Color? = null,
+    textColor: Color? = null
 ) {
-    val background = if (dark) WhiteAlpha20 else BlackAlpha10
-    val contentColor = if (dark) White else BlackAlpha80
+    val background = backgroundColor ?: if (dark) WhiteAlpha20 else BlackAlpha10
+    val contentColor = textColor ?: if (dark) White else BlackAlpha80
 
     Row(
         modifier = Modifier

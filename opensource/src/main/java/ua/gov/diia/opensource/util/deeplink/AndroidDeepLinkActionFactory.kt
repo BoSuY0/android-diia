@@ -16,9 +16,11 @@ class AndroidDeepLinkActionFactory @Inject constructor() :
     DeepLinkActionFactory {
 
     override fun buildDeepLinkAction(path: String): DeepLinkAction {
+        android.util.Log.d("DeepLinkFactory", "buildDeepLinkAction: path=$path")
         if (path.startsWith(DEEP_LINK_CONTRACT)) {
             val sessionId = path.removePrefix(DEEP_LINK_CONTRACT)
                 .trim('/')
+            android.util.Log.d("DeepLinkFactory", "Contract deep-link detected: sessionId=$sessionId")
             if (sessionId.isNotBlank()) {
                 return DeepLinkActionJoinContract(sessionId)
             }
@@ -69,17 +71,6 @@ class AndroidDeepLinkActionFactory @Inject constructor() :
                     flowType = flowType,
                     flowSubType = flowSubType,
                     resId = resId
-                )
-            }
-        }
-
-        if (path.startsWith("/contract/")) {
-            val params = path.split(SPLIT)
-            if (params.size > 2) {
-                val sessionId = params[2]
-                return DeepLinkActionStartFlow(
-                    "contract",
-                    sessionId
                 )
             }
         }

@@ -130,7 +130,25 @@ abstract class MainActivity : AppCompatActivity() {
     }
 
     private fun processIntent(intent: Intent?) {
-        val path = intent?.data?.path
+        val uri = intent?.data ?: return
+        val scheme = uri.scheme
+        val host = uri.host
+        val path = uri.path
+        
+        // Обробка custom scheme для контрактів: diia-contracts://contract/{session_id}
+        if (scheme == "diia-contracts" && host == "contract") {
+            val sessionId = path?.trim('/').orEmpty()
+            if (sessionId.isNotBlank()) {
+                if (vm.allowAuthorizedDeepLinks) {
+                    navController.popBackStack(R.id.homeF, false)
+                }
+                // Формуємо стандартний path для обробки
+                vm.processIntentPath("/contract/$sessionId")
+                return
+            }
+        }
+        
+        // Стандартна обробка для https:// deep-links
         if (path?.startsWith("/auth") == false) {
             //after push is clicked, navigate to HomeF as there we handle all nav logic
             if (vm.allowAuthorizedDeepLinks) {

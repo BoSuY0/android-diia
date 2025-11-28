@@ -1,4 +1,8 @@
-package ua.gov.diia.opensource.ui.compose
+import os
+
+file_path = r"c:\Users\bodys\AndroidStudioProjects\android-diia\opensource\src\main\java\ua\gov\diia\opensource\ui\compose\CreateContractFCompose.kt"
+
+content = r"""package ua.gov.diia.opensource.ui.compose
 
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -11,20 +15,22 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.viewModels
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.fragment.findNavController
 import androidx.navigation.navOptions
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 import ua.gov.diia.opensource.NavMainDirections
+import ua.gov.diia.opensource.ui.compose.ContractsMenuViewModel
+import ua.gov.diia.opensource.ui.compose.ContractsFlowViewModel
 
 @AndroidEntryPoint
 class CreateContractFCompose : Fragment() {
@@ -54,14 +60,13 @@ class CreateContractFCompose : Fragment() {
             val sessionPartiesState by contractsFlowViewModel.sessionParties.collectAsStateWithLifecycle()
             val contractFieldsState by contractsFlowViewModel.contractFields.collectAsStateWithLifecycle()
             val partyContextState by contractsFlowViewModel.partyContextFields.collectAsStateWithLifecycle()
-            val mainRoleState by contractsFlowViewModel.mainRole.collectAsStateWithLifecycle()
             val isFlowLoading by contractsFlowViewModel.isLoading.collectAsStateWithLifecycle()
             val previewHtml by contractsFlowViewModel.previewHtml.collectAsStateWithLifecycle()
             val isPreviewLoading by contractsFlowViewModel.isPreviewLoading.collectAsStateWithLifecycle()
             val chatMessages by contractsFlowViewModel.chatMessages.collectAsStateWithLifecycle()
             val isChatSending by contractsFlowViewModel.isChatSending.collectAsStateWithLifecycle()
             val flowError by contractsFlowViewModel.error.collectAsStateWithLifecycle()
-
+            // Визначаємо початковий стан - пропускаємо intro якщо користувач обрав "Більше не показувати"
             val initialStep = if (contractsFlowViewModel.shouldSkipIntro()) {
                 ContractCreationStep.SelectCategory
             } else {
@@ -69,9 +74,7 @@ class CreateContractFCompose : Fragment() {
             }
             var navigationState by remember { mutableStateOf<ContractCreationStep>(initialStep) }
             val scope = rememberCoroutineScope()
-
             LaunchedEffect(Unit) { contractsFlowViewModel.loadMySessions() }
-
             val navigateToContractDetails: (ContractUiModel) -> Unit = { contract ->
                 val directions = NavMainDirections.actionHomeFToContracts(
                     sessionId = contract.id,
@@ -112,14 +115,14 @@ class CreateContractFCompose : Fragment() {
                             onBackClick = { findNavController().popBackStack() },
                             onContractSelected = { categoryId ->
                                 scope.launch {
+                                    // Сесія створюється пізніше, при збереженні даних
                                     contractsFlowViewModel.selectCategory(categoryId)
                                     navigationState = ContractCreationStep.SelectTemplate(categoryId)
                                 }
                             },
                             onAiChatClick = {
                                 navigationState = ContractCreationStep.AiChat
-                            },
-                            isLoading = isLoadingCategories
+                            }
                         )
                     }
                     is ContractCreationStep.SelectTemplate -> {
@@ -135,11 +138,13 @@ class CreateContractFCompose : Fragment() {
                                     contractsFlowViewModel.selectTemplate(templateId)
                                     navigationState = ContractCreationStep.SelectMode(templateId)
                                 }
-                            },
-                            isLoading = isLoadingTemplates
+                            }
                         )
                     }
                     is ContractCreationStep.SelectMode -> {
+                        LaunchedEffect(Unit) {
+                            contractsMenuViewModel.loadCategories()
+                        }
                         ContractFillingModeScreen(
                             onBackClick = { navigationState = ContractCreationStep.SelectCategory },
                             onModeSelected = { isBothSides ->
@@ -149,6 +154,7 @@ class CreateContractFCompose : Fragment() {
                         )
                     }
                     is ContractCreationStep.SelectRoleMenu -> {
+                        // Схема ролей вже завантажена в selectCategory без сесії
                         ContractRoleMenuScreen(
                             roles = if (sessionPartiesState.isNotEmpty()) sessionPartiesState else partySchemaState?.roles.orEmpty(),
                             personTypes = partySchemaState?.personTypes.orEmpty(),
@@ -165,17 +171,12 @@ class CreateContractFCompose : Fragment() {
                         )
                     }
                     is ContractCreationStep.FillRoleData -> {
-                        // В partial mode умови договору доступні ТІЛЬКИ для main_role
-                        val filteredContractFields = if (!state.isBothSides && state.selectedRoleId != mainRoleState) {
-                            emptyList()
-                        } else {
-                            contractFieldsState
-                        }
+                        // Схема вже завантажена з категорії, сесія створюється при saveRoleData
                         ContractRoleSelectionScreen(
                             contractType = state.contractType,
                             roles = if (sessionPartiesState.isNotEmpty()) sessionPartiesState else partySchemaState?.roles.orEmpty(),
                             personTypes = partySchemaState?.personTypes.orEmpty(),
-                            contractFields = filteredContractFields,
+                            contractFields = contractFieldsState,
                             partyContext = partyContextState,
                             clientId = contractsFlowViewModel.clientId,
                             onBackClick = { navigationState = ContractCreationStep.SelectRoleMenu(state.contractType, state.isBothSides) },
@@ -216,7 +217,7 @@ class CreateContractFCompose : Fragment() {
                                 navigationState = ContractCreationStep.ContractDetails(state.contract)
                             },
                             onRetry = {
-                                contractsFlowViewModel.loadContractPreview(state.contract.id)
+                                scope.launch { contractsFlowViewModel.loadContractPreview(state.contract.id) }
                             }
                         )
                     }
@@ -236,6 +237,8 @@ class CreateContractFCompose : Fragment() {
                             onNewChatClick = { contractsFlowViewModel.resetChat() }
                         )
                     }
+                    // Інші стани не використовуються в цьому фрагменті
+                    else -> { /* ContractPreview - не використовується */ }
                 }
             }
         }
@@ -246,3 +249,9 @@ class CreateContractFCompose : Fragment() {
         composeView = null
     }
 }
+"""
+
+with open(file_path, "w", encoding="utf-8") as f:
+    f.write(content)
+
+print(f"Successfully wrote to {file_path}")
